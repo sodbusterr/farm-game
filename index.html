@@ -3,170 +3,531 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Farm</title>
+    <title>Ashfield</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, sans-serif;
-            background: #2b1d0e;
-            color: #f5e6c8;
-            padding: 16px;
-            user-select: none;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            font-size: 18px;
-        }
-        .field {
-            background: #4a3520;
-            border-radius: 16px;
-            padding: 40px 20px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .field-emoji {
-            font-size: 80px;
-            display: block;
-            margin-bottom: 16px;
-        }
-        button {
+        html, body {
             width: 100%;
-            padding: 16px;
-            font-size: 18px;
-            border: none;
-            border-radius: 12px;
-            background: #7cb342;
-            color: white;
+            height: 100%;
+            overflow: hidden;
+            background: #6b3a3a;
+            font-family: -apple-system, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        #game {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .hud {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            color: #fff;
+            font-size: 16px;
             font-weight: bold;
-            margin-bottom: 10px;
+            text-shadow: 2px 2px 0 #000;
+            pointer-events: none;
         }
-        button:active { background: #689f38; }
-        .shop {
-            background: #3a2810;
-            border-radius: 12px;
-            padding: 16px;
+        .hud div { margin-bottom: 4px; }
+        .joystick {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            touch-action: none;
         }
-        .shop-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #4a3520;
+        .joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            margin: -25px 0 0 -25px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            border: 2px solid rgba(255,255,255,0.7);
         }
-        .shop-item:last-child { border-bottom: none; }
-        .shop-item button {
-            width: auto;
-            padding: 8px 16px;
+        .action-btn {
+            position: absolute;
+            bottom: 50px;
+            right: 30px;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: rgba(124,179,66,0.7);
+            border: 2px solid rgba(255,255,255,0.5);
+            color: #fff;
             font-size: 14px;
-            margin: 0;
+            font-weight: bold;
+            text-shadow: 1px 1px 0 #000;
         }
+        .action-btn:active { background: rgba(124,179,66,1); }
+        .fish-btn {
+            position: absolute;
+            bottom: 160px;
+            right: 40px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(66,124,179,0.7);
+            border: 2px solid rgba(255,255,255,0.5);
+            color: #fff;
+            font-size: 24px;
+        }
+        .fish-btn:active { background: rgba(66,124,179,1); }
     </style>
 </head>
 <body>
-    <div class="header">
-        <span>💰 <span id="coins">0</span></span>
-        <span>🌾 <span id="harvest">0</span></span>
+    <canvas id="game"></canvas>
+
+    <div class="hud">
+        <div>💰 <span id="coins">0</span></div>
+        <div>🌾 <span id="harvest">0</span></div>
     </div>
 
-    <div class="field">
-        <span class="field-emoji" id="field-emoji">🌱</span>
-        <div id="field-status">Пустое поле</div>
+    <div class="joystick" id="joystick">
+        <div class="joystick-knob" id="joystick-knob"></div>
     </div>
 
-    <button id="action-btn">Посадить</button>
-
-    <div class="shop">
-        <h3 style="margin-bottom: 12px;">Улучшения</h3>
-        <div class="shop-item">
-            <span>🚿 Лейка (+1 к урожаю)</span>
-            <button onclick="buyUpgrade('watering', 10)">10 💰</button>
-        </div>
-        <div class="shop-item">
-            <span>🚜 Трактор (авто-сбор)</span>
-            <button onclick="buyUpgrade('tractor', 100)">100 💰</button>
-        </div>
-        <div class="shop-item">
-            <span>🌾 Новое поле</span>
-            <button onclick="buyUpgrade('field', 500)">500 💰</button>
-        </div>
-    </div>
+    <button class="action-btn" id="action-btn">Действие</button>
+    <button class="fish-btn" id="fish-btn">🎣</button>
 
     <script>
-        let state = JSON.parse(localStorage.getItem('farmState')) || {
+        // ============ TELEGRAM ============
+        window.Telegram?.WebApp?.ready();
+        window.Telegram?.WebApp?.expand();
+
+        // ============ CANVAS ============
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        let W, H;
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // ============ СПРАЙТЫ ============
+        const playerImg = new Image();
+        playerImg.src = 'player.png';
+        const batImg = new Image();
+        batImg.src = 'bat.png';
+
+        // ============ СОСТОЯНИЕ ИГРЫ ============
+        const state = {
             coins: 0,
             harvest: 0,
-            fieldState: 'empty',
-            upgrades: { watering: 0, tractor: 0, field: 0 }
+            // Персонаж
+            player: { x: 0, y: 0, dir: 0, frame: 0, animTimer: 0, moving: false },
+            // Грядки
+            plots: [],
+            // Летучая мышь
+            bat: { x: 0, y: 0, vx: 0, vy: 0, timer: 0, active: false, frame: 0 },
+            // Флаг
+            fishing: false,
+            fishTimer: 0,
+            nearShop: false,
+            message: '',
+            messageTimer: 0
         };
 
-        function save() {
-            localStorage.setItem('farmState', JSON.stringify(state));
+        // Размеры тайла (предполагаем 16x16 в спрайт-листе, увеличим в 3 раза)
+        const TILE = 16;
+        const SCALE = 3;
+        const TILE_SIZE = TILE * SCALE;
+
+        // Остров (центр экрана)
+        let island = { x: 0, y: 0, r: 0 };
+
+        function initWorld() {
+            island.x = W / 2;
+            island.y = H / 2;
+            island.r = Math.min(W, H) * 0.35;
+
+            // Персонаж в центре
+            state.player.x = island.x;
+            state.player.y = island.y;
+
+            // Грядки — 3 штуки на острове
+            state.plots = [
+                { x: island.x - 80, y: island.y - 40, state: 'empty', timer: 0 },
+                { x: island.x + 80, y: island.y - 40, state: 'empty', timer: 0 },
+                { x: island.x, y: island.y + 80, state: 'empty', timer: 0 }
+            ];
+
+            // Летучая мышь — стартует за экраном
+            state.bat.x = -100;
+            state.bat.y = -100;
         }
+        initWorld();
+        window.addEventListener('resize', () => { resize(); initWorld(); });
 
-        function render() {
-            document.getElementById('coins').innerText = state.coins;
-            document.getElementById('harvest').innerText = state.harvest;
+        // ============ УПРАВЛЕНИЕ ============
+        let joyInput = { x: 0, y: 0 };
+        let keys = {};
 
-            const emoji = document.getElementById('field-emoji');
-            const status = document.getElementById('field-status');
-            const btn = document.getElementById('action-btn');
+        // Клавиатура
+        window.addEventListener('keydown', e => keys[e.key] = true);
+        window.addEventListener('keyup', e => keys[e.key] = false);
 
-            if (state.fieldState === 'empty') {
-                emoji.innerText = '🌱';
-                status.innerText = 'Пустое поле';
-                btn.innerText = 'Посадить';
-            } else if (state.fieldState === 'growing') {
-                emoji.innerText = '🌿';
-                status.innerText = 'Растет...';
-                btn.innerText = 'Полить';
-            } else if (state.fieldState === 'ready') {
-                emoji.innerText = '🌾';
-                status.innerText = 'Готово к сбору!';
-                btn.innerText = 'Собрать';
+        // Джойстик
+        const joyEl = document.getElementById('joystick');
+        const knobEl = document.getElementById('joystick-knob');
+        let joyActive = false;
+        let joyStart = { x: 0, y: 0 };
+
+        function joyStartHandler(e) {
+            e.preventDefault();
+            joyActive = true;
+            const touch = e.touches ? e.touches[0] : e;
+            const rect = joyEl.getBoundingClientRect();
+            joyStart.x = rect.left + rect.width / 2;
+            joyStart.y = rect.top + rect.height / 2;
+        }
+        function joyMoveHandler(e) {
+            if (!joyActive) return;
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            let dx = touch.clientX - joyStart.x;
+            let dy = touch.clientY - joyStart.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxDist = 40;
+            if (dist > maxDist) {
+                dx = dx / dist * maxDist;
+                dy = dy / dist * maxDist;
             }
+            knobEl.style.transform = `translate(${dx}px, ${dy}px)`;
+            joyInput.x = dx / maxDist;
+            joyInput.y = dy / maxDist;
         }
+        function joyEndHandler(e) {
+            joyActive = false;
+            joyInput.x = 0;
+            joyInput.y = 0;
+            knobEl.style.transform = 'translate(0,0)';
+        }
+        joyEl.addEventListener('touchstart', joyStartHandler);
+        joyEl.addEventListener('touchmove', joyMoveHandler);
+        joyEl.addEventListener('touchend', joyEndHandler);
+        joyEl.addEventListener('mousedown', joyStartHandler);
+        window.addEventListener('mousemove', joyMoveHandler);
+        window.addEventListener('mouseup', joyEndHandler);
 
+        // ============ ДЕЙСТВИЕ ============
         document.getElementById('action-btn').onclick = () => {
-            if (state.fieldState === 'empty') {
-                state.fieldState = 'growing';
-                save();
-                render();
-                setTimeout(() => {
-                    if (state.fieldState === 'growing') {
-                        state.fieldState = 'ready';
-                        save();
-                        render();
-                    }
-                }, 3000);
-            } else if (state.fieldState === 'growing') {
-                state.fieldState = 'ready';
-                save();
-                render();
-            } else if (state.fieldState === 'ready') {
-                const base = 1 + state.upgrades.watering;
-                state.coins += base;
-                state.harvest += 1;
-                state.fieldState = 'empty';
-                save();
-                render();
+            if (state.fishing) return;
+            // Проверяем ближайшую грядку
+            let closest = null;
+            let minDist = 60;
+            for (const plot of state.plots) {
+                const d = Math.hypot(plot.x - state.player.x, plot.y - state.player.y);
+                if (d < minDist) { minDist = d; closest = plot; }
             }
-        };
-
-        function buyUpgrade(type, cost) {
-            if (state.coins < cost) {
-                alert('Не хватает монет!');
+            if (!closest) {
+                showMessage('Подойди к грядке');
                 return;
             }
-            state.coins -= cost;
-            state.upgrades[type] += 1;
-            save();
-            render();
+            if (closest.state === 'empty') {
+                closest.state = 'growing';
+                closest.timer = 3; // 3 секунды до созревания
+                showMessage('Посадил 🌱');
+            } else if (closest.state === 'growing') {
+                closest.state = 'ready';
+                showMessage('Полил 💧');
+            } else if (closest.state === 'ready') {
+                state.coins += 1;
+                state.harvest += 1;
+                closest.state = 'empty';
+                showMessage('+1 монета 💰');
+            }
+        };
+
+        // ============ РЫБАЛКА ============
+        document.getElementById('fish-btn').onclick = () => {
+            if (state.fishing) return;
+            // Проверяем, у воды ли
+            const dist = Math.hypot(state.player.x - island.x, state.player.y - island.y);
+            if (dist < island.r - 30) {
+                showMessage('Подойди к краю острова');
+                return;
+            }
+            state.fishing = true;
+            state.fishTimer = 2 + Math.random() * 3;
+            showMessage('Забросил удочку...');
+        };
+
+        function showMessage(text) {
+            state.message = text;
+            state.messageTimer = 2;
         }
 
-        render();
+        // ============ ОБНОВЛЕНИЕ ============
+        function update(dt) {
+            const p = state.player;
+            // Движение
+            let mx = joyInput.x;
+            let my = joyInput.y;
+            if (keys['ArrowLeft'] || keys['a']) mx = -1;
+            if (keys['ArrowRight'] || keys['d']) mx = 1;
+            if (keys['ArrowUp'] || keys['w']) my = -1;
+            if (keys['ArrowDown'] || keys['s']) my = 1;
+
+            const speed = 200;
+            p.moving = (mx !== 0 || my !== 0);
+
+            if (p.moving) {
+                const len = Math.hypot(mx, my);
+                mx /= len; my /= len;
+                let nx = p.x + mx * speed * dt;
+                let ny = p.y + my * speed * dt;
+
+                // Не выходить за остров
+                const dx = nx - island.x;
+                const dy = ny - island.y;
+                const d = Math.hypot(dx, dy);
+                if (d > island.r - 20) {
+                    const k = (island.r - 20) / d;
+                    nx = island.x + dx * k;
+                    ny = island.y + dy * k;
+                }
+
+                p.x = nx;
+                p.y = ny;
+
+                // Направление
+                if (Math.abs(mx) > Math.abs(my)) {
+                    p.dir = mx > 0 ? 3 : 1; // 1=лево, 3=право
+                } else {
+                    p.dir = my > 0 ? 0 : 2; // 0=низ, 2=верх
+                }
+
+                // Анимация
+                p.animTimer += dt;
+                if (p.animTimer > 0.15) {
+                    p.animTimer = 0;
+                    p.frame = (p.frame + 1) % 4;
+                }
+            } else {
+                p.frame = 0;
+                p.animTimer = 0;
+            }
+
+            // Грядки растут
+            for (const plot of state.plots) {
+                if (plot.state === 'growing') {
+                    plot.timer -= dt;
+                    if (plot.timer <= 0) plot.state = 'ready';
+                }
+            }
+
+            // Рыбалка
+            if (state.fishing) {
+                state.fishTimer -= dt;
+                if (state.fishTimer <= 0) {
+                    state.fishing = false;
+                    if (Math.random() < 0.7) {
+                        state.coins += 3;
+                        showMessage('Поймал рыбу! +3 💰');
+                    } else {
+                        showMessage('Сорвалась...');
+                    }
+                }
+            }
+
+            // Летучая мышь
+            const bat = state.bat;
+            bat.timer -= dt;
+            if (!bat.active && bat.timer <= 0) {
+                bat.active = true;
+                bat.x = Math.random() < 0.5 ? -50 : W + 50;
+                bat.y = 100 + Math.random() * 200;
+                bat.vx = bat.x < 0 ? 80 : -80;
+                bat.vy = 0;
+                bat.duration = 6;
+            }
+            if (bat.active) {
+                bat.x += bat.vx * dt;
+                bat.y += Math.sin(Date.now() / 300) * 30 * dt;
+                bat.frame += dt * 8;
+                bat.duration -= dt;
+                if (bat.duration <= 0) {
+                    bat.active = false;
+                    bat.timer = 10 + Math.random() * 15;
+                }
+            }
+
+            // Сообщение
+            if (state.messageTimer > 0) state.messageTimer -= dt;
+        }
+
+        // ============ ОТРИСОВКА ============
+        function draw() {
+            // Фон — тёмно-красный, но светлый
+            ctx.fillStyle = '#6b3a3a';
+            ctx.fillRect(0, 0, W, H);
+
+            // Дальний фон — туман
+            const grad = ctx.createRadialGradient(island.x, island.y, island.r * 0.5, island.x, island.y, Math.max(W, H));
+            grad.addColorStop(0, 'rgba(140, 90, 90, 0.6)');
+            grad.addColorStop(1, 'rgba(60, 30, 30, 0.9)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Остров — земля
+            ctx.beginPath();
+            ctx.arc(island.x, island.y, island.r, 0, Math.PI * 2);
+            ctx.fillStyle = '#8b6f47';
+            ctx.fill();
+            ctx.strokeStyle = '#5a4730';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Внутренний круг — трава
+            ctx.beginPath();
+            ctx.arc(island.x, island.y, island.r - 15, 0, Math.PI * 2);
+            ctx.fillStyle = '#6b8f3d';
+            ctx.fill();
+
+            // Грядки
+            for (const plot of state.plots) {
+                ctx.fillStyle = '#5a3a1a';
+                ctx.fillRect(plot.x - 24, plot.y - 24, 48, 48);
+                ctx.strokeStyle = '#3a2510';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(plot.x - 24, plot.y - 24, 48, 48);
+
+                // Растение
+                ctx.font = '32px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                if (plot.state === 'empty') {
+                    // ничего
+                } else if (plot.state === 'growing') {
+                    ctx.fillText('🌱', plot.x, plot.y);
+                } else if (plot.state === 'ready') {
+                    ctx.fillText('🌾', plot.x, plot.y);
+                }
+            }
+
+            // Лавка — домик справа
+            const shopX = island.x + island.r * 0.6;
+            const shopY = island.y - island.r * 0.5;
+            ctx.fillStyle = '#5a3a1a';
+            ctx.fillRect(shopX - 30, shopY - 30, 60, 60);
+            ctx.fillStyle = '#8b2a2a';
+            ctx.beginPath();
+            ctx.moveTo(shopX - 36, shopY - 30);
+            ctx.lineTo(shopX, shopY - 55);
+            ctx.lineTo(shopX + 36, shopY - 30);
+            ctx.closePath();
+            ctx.fill();
+            ctx.font = '20px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏪', shopX, shopY + 5);
+
+            // Проверка близости к лавке
+            state.nearShop = Math.hypot(state.player.x - shopX, state.player.y - shopY) < 70;
+            if (state.nearShop) {
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText('Лавка (нажми действие)', shopX, shopY + 45);
+            }
+
+            // Персонаж
+            drawPlayer();
+
+            // Летучая мышь
+            if (state.bat.active) drawBat();
+
+            // Сообщение
+            if (state.messageTimer > 0) {
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                const msgWidth = ctx.measureText(state.message).width + 40;
+                ctx.fillRect(W/2 - msgWidth/2, H - 200, msgWidth, 40);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(state.message, W/2, H - 175);
+            }
+
+            // Рыбалка
+            if (state.fishing) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(W/2 - 100, H/2 - 30, 200, 60);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 18px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('🎣 Ждём...', W/2, H/2 + 5);
+            }
+        }
+
+        function drawPlayer() {
+            const p = state.player;
+            const size = 32;
+            // Пока спрайт не загрузился — рисуем квадратик
+            if (!playerImg.complete || playerImg.naturalWidth === 0) {
+                ctx.fillStyle = '#e8a86b';
+                ctx.fillRect(p.x - size/2, p.y - size, size, size);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(p.x - 8, p.y - 22, 4, 4);
+                ctx.fillRect(p.x + 4, p.y - 22, 4, 4);
+                return;
+            }
+            // Спрайт-лист: 4 столбца (кадры) × 4 строки (направления)
+            const fw = playerImg.width / 4;
+            const fh = playerImg.height / 4;
+            // p.dir: 0=низ, 1=лево, 2=верх, 3=право
+            // В спрайт-листе обычно порядок: 0=низ, 1=лево, 2=право, 3=верх
+            // Но у нас упрощённо — совместим с исходником
+            const srcX = p.frame * fw;
+            const srcY = p.dir * fh;
+            const dw = fw * SCALE;
+            const dh = fh * SCALE;
+            ctx.drawImage(
+                playerImg,
+                srcX, srcY, fw, fh,
+                p.x - dw/2, p.y - dh + 10, dw, dh
+            );
+        }
+
+        function drawBat() {
+            const b = state.bat;
+            if (!batImg.complete || batImg.naturalWidth === 0) {
+                ctx.fillStyle = '#6a4a6a';
+                ctx.fillRect(b.x - 12, b.y - 12, 24, 24);
+                return;
+            }
+            const fw = batImg.width / 4;
+            const fh = batImg.height / 4;
+            const frame = Math.floor(b.frame) % 4;
+            const srcX = frame * fw;
+            const srcY = 0;
+            const dw = fw * 2;
+            const dh = fh * 2;
+            ctx.drawImage(batImg, srcX, srcY, fw, fh, b.x - dw/2, b.y - dh/2, dw, dh);
+        }
+
+        // ============ ЦИКЛ ============
+        let lastTime = 0;
+        function loop(time) {
+            const dt = Math.min((time - lastTime) / 1000, 0.1);
+            lastTime = time;
+            update(dt);
+            draw();
+            document.getElementById('coins').innerText = state.coins;
+            document.getElementById('harvest').innerText = state.harvest;
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
     </script>
 </body>
 </html>
