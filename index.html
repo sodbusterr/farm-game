@@ -2,21 +2,171 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Моя Ферма</title>
-    <!-- Подключаем SDK Telegram -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Farm</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, sans-serif;
+            background: #2b1d0e;
+            color: #f5e6c8;
+            padding: 16px;
+            user-select: none;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .field {
+            background: #4a3520;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .field-emoji {
+            font-size: 80px;
+            display: block;
+            margin-bottom: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            border: none;
+            border-radius: 12px;
+            background: #7cb342;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        button:active { background: #689f38; }
+        .shop {
+            background: #3a2810;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #4a3520;
+        }
+        .shop-item:last-child { border-bottom: none; }
+        .shop-item button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin: 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Привет, <span id="username">гость</span>!</h1>
-    <p>Тут будет ферма.</p>
+    <div class="header">
+        <span>💰 <span id="coins">0</span></span>
+        <span>🌾 <span id="harvest">0</span></span>
+    </div>
+
+    <div class="field">
+        <span class="field-emoji" id="field-emoji">🌱</span>
+        <div id="field-status">Пустое поле</div>
+    </div>
+
+    <button id="action-btn">Посадить</button>
+
+    <div class="shop">
+        <h3 style="margin-bottom: 12px;">Улучшения</h3>
+        <div class="shop-item">
+            <span>🚿 Лейка (+1 к урожаю)</span>
+            <button onclick="buyUpgrade('watering', 10)">10 💰</button>
+        </div>
+        <div class="shop-item">
+            <span>🚜 Трактор (авто-сбор)</span>
+            <button onclick="buyUpgrade('tractor', 100)">100 💰</button>
+        </div>
+        <div class="shop-item">
+            <span>🌾 Новое поле</span>
+            <button onclick="buyUpgrade('field', 500)">500 💰</button>
+        </div>
+    </div>
+
     <script>
-        // Говорим Telegram, что приложение готово
-        window.Telegram.WebApp.ready();
-        // Пробуем достать имя пользователя
-        const user = window.Telegram.WebApp.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('username').innerText = user.first_name;
+        let state = JSON.parse(localStorage.getItem('farmState')) || {
+            coins: 0,
+            harvest: 0,
+            fieldState: 'empty',
+            upgrades: { watering: 0, tractor: 0, field: 0 }
+        };
+
+        function save() {
+            localStorage.setItem('farmState', JSON.stringify(state));
         }
+
+        function render() {
+            document.getElementById('coins').innerText = state.coins;
+            document.getElementById('harvest').innerText = state.harvest;
+
+            const emoji = document.getElementById('field-emoji');
+            const status = document.getElementById('field-status');
+            const btn = document.getElementById('action-btn');
+
+            if (state.fieldState === 'empty') {
+                emoji.innerText = '🌱';
+                status.innerText = 'Пустое поле';
+                btn.innerText = 'Посадить';
+            } else if (state.fieldState === 'growing') {
+                emoji.innerText = '🌿';
+                status.innerText = 'Растет...';
+                btn.innerText = 'Полить';
+            } else if (state.fieldState === 'ready') {
+                emoji.innerText = '🌾';
+                status.innerText = 'Готово к сбору!';
+                btn.innerText = 'Собрать';
+            }
+        }
+
+        document.getElementById('action-btn').onclick = () => {
+            if (state.fieldState === 'empty') {
+                state.fieldState = 'growing';
+                save();
+                render();
+                setTimeout(() => {
+                    if (state.fieldState === 'growing') {
+                        state.fieldState = 'ready';
+                        save();
+                        render();
+                    }
+                }, 3000);
+            } else if (state.fieldState === 'growing') {
+                state.fieldState = 'ready';
+                save();
+                render();
+            } else if (state.fieldState === 'ready') {
+                const base = 1 + state.upgrades.watering;
+                state.coins += base;
+                state.harvest += 1;
+                state.fieldState = 'empty';
+                save();
+                render();
+            }
+        };
+
+        function buyUpgrade(type, cost) {
+            if (state.coins < cost) {
+                alert('Не хватает монет!');
+                return;
+            }
+            state.coins -= cost;
+            state.upgrades[type] += 1;
+            save();
+            render();
+        }
+
+        render();
     </script>
 </body>
 </html>
