@@ -8,100 +8,153 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #6b3a3a;
+            width: 100%; height: 100%; overflow: hidden;
+            background: #5a2a2a;
             font-family: -apple-system, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
+            user-select: none; -webkit-user-select: none;
             touch-action: none;
         }
-        #game {
-            display: block;
-            width: 100%;
-            height: 100%;
+        #game { display: block; width: 100%; height: 100%; }
+
+        /* Инвентарь сверху */
+        .inventory {
+            position: absolute; top: 10px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 8px;
+            background: rgba(0,0,0,0.5);
+            padding: 8px 14px; border-radius: 12px;
+            pointer-events: none;
         }
-        .hud {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            color: #fff;
-            font-size: 16px;
-            font-weight: bold;
+        .inv-item {
+            display: flex; align-items: center; gap: 4px;
+            color: #fff; font-weight: bold; font-size: 15px;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        /* Монеты сверху слева */
+        .coins {
+            position: absolute; top: 10px; left: 12px;
+            color: #ffd54f; font-size: 20px; font-weight: bold;
             text-shadow: 2px 2px 0 #000;
             pointer-events: none;
         }
-        .hud div { margin-bottom: 4px; }
-        .joystick {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.15);
-            border: 2px solid rgba(255,255,255,0.3);
+
+        /* Кнопки управления */
+        .controls {
+            position: absolute; bottom: 24px; left: 0; right: 0;
+            display: flex; justify-content: space-between;
+            padding: 0 24px; pointer-events: none;
+        }
+        .left-group { display: flex; gap: 14px; pointer-events: auto; }
+        .right-group { display: flex; gap: 14px; pointer-events: auto; }
+        .ctrl-btn {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.5);
+            color: #fff; font-size: 30px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
             touch-action: none;
         }
-        .joystick-knob {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 50px;
-            height: 50px;
-            margin: -25px 0 0 -25px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.5);
-            border: 2px solid rgba(255,255,255,0.7);
-        }
-        .action-btn {
-            position: absolute;
-            bottom: 50px;
-            right: 30px;
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: rgba(124,179,66,0.7);
-            border: 2px solid rgba(255,255,255,0.5);
-            color: #fff;
-            font-size: 14px;
-            font-weight: bold;
+        .ctrl-btn:active { background: rgba(255,255,255,0.45); }
+        .jump-btn { background: rgba(124,179,66,0.5); }
+        .jump-btn:active { background: rgba(124,179,66,0.9); }
+
+        /* Кнопка "Посадить" */
+        .plant-btn {
+            position: absolute; bottom: 110px; left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 28px; border-radius: 12px;
+            background: rgba(124,179,66,0.95);
+            border: 2px solid #fff;
+            color: #fff; font-size: 18px; font-weight: bold;
             text-shadow: 1px 1px 0 #000;
+            display: none;
         }
-        .action-btn:active { background: rgba(124,179,66,1); }
-        .fish-btn {
-            position: absolute;
-            bottom: 160px;
-            right: 40px;
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: rgba(66,124,179,0.7);
-            border: 2px solid rgba(255,255,255,0.5);
-            color: #fff;
-            font-size: 24px;
+        .plant-btn:active { background: #689f38; }
+
+        /* Меню выбора растения */
+        .seed-menu {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(40,20,20,0.95);
+            border: 3px solid #7cb342;
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+            flex-direction: column; gap: 12px;
+            min-width: 240px;
         }
-        .fish-btn:active { background: rgba(66,124,179,1); }
+        .seed-menu h3 {
+            color: #fff; text-align: center; font-size: 18px;
+            margin-bottom: 6px;
+        }
+        .seed-option {
+            padding: 14px; border-radius: 10px;
+            background: rgba(124,179,66,0.3);
+            border: 2px solid #7cb342;
+            color: #fff; font-size: 16px; font-weight: bold;
+            text-align: left;
+        }
+        .seed-option:active { background: rgba(124,179,66,0.7); }
+        .seed-option .time {
+            float: right; font-size: 13px; opacity: 0.7;
+        }
+        .close-btn {
+            background: rgba(200,50,50,0.7);
+            border-color: #f44336;
+        }
+
+        /* Сообщение */
+        .toast {
+            position: absolute; top: 70px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.75);
+            color: #fff; padding: 10px 20px;
+            border-radius: 10px; font-size: 15px; font-weight: bold;
+            display: none; text-align: center;
+        }
     </style>
 </head>
 <body>
     <canvas id="game"></canvas>
 
-    <div class="hud">
-        <div>💰 <span id="coins">0</span></div>
-        <div>🌾 <span id="harvest">0</span></div>
+    <div class="coins">💰 <span id="coins">0</span></div>
+
+    <div class="inventory">
+        <div class="inv-item">🌾 <span id="inv-wheat">0</span></div>
+        <div class="inv-item">🥔 <span id="inv-potato">0</span></div>
+        <div class="inv-item">🥕 <span id="inv-carrot">0</span></div>
     </div>
 
-    <div class="joystick" id="joystick">
-        <div class="joystick-knob" id="joystick-knob"></div>
+    <div class="controls">
+        <div class="left-group">
+            <button class="ctrl-btn" id="btn-left">◀</button>
+        </div>
+        <div class="right-group">
+            <button class="ctrl-btn" id="btn-right">▶</button>
+            <button class="ctrl-btn jump-btn" id="btn-jump">⤒</button>
+        </div>
     </div>
 
-    <button class="action-btn" id="action-btn">Действие</button>
-    <button class="fish-btn" id="fish-btn">🎣</button>
+    <button class="plant-btn" id="plant-btn">Посадить</button>
+
+    <div class="seed-menu" id="seed-menu">
+        <h3>Что посадить?</h3>
+        <button class="seed-option" data-crop="wheat">
+            🌾 Пшеница <span class="time">45 сек · 3 💰</span>
+        </button>
+        <button class="seed-option" data-crop="potato">
+            🥔 Картошка <span class="time">30 сек · 2 💰</span>
+        </button>
+        <button class="seed-option" data-crop="carrot">
+            🥕 Морковь <span class="time">30 сек · 2 💰</span>
+        </button>
+        <button class="seed-option close-btn" id="seed-close">Отмена</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
 
     <script>
-        // ============ TELEGRAM ============
         window.Telegram?.WebApp?.ready();
         window.Telegram?.WebApp?.expand();
 
@@ -116,201 +169,214 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // ============ СПРАЙТЫ ============
-        const playerImg = new Image();
-        playerImg.src = 'player.png';
-        const batImg = new Image();
-        batImg.src = 'bat.png';
+        // ============ АССЕТЫ ============
+        const assets = {
+            player: new Image(),
+            ground: new Image(),
+            bat: new Image()
+        };
+        assets.player.src = 'player.png';
+        assets.ground.src = 'ground.png';
+        assets.bat.src = 'bat.png';
 
-        // ============ СОСТОЯНИЕ ИГРЫ ============
-        const state = {
-            coins: 0,
-            harvest: 0,
-            // Персонаж
-            player: { x: 0, y: 0, dir: 0, frame: 0, animTimer: 0, moving: false },
-            // Грядки
-            plots: [],
-            // Летучая мышь
-            bat: { x: 0, y: 0, vx: 0, vy: 0, timer: 0, active: false, frame: 0 },
-            // Флаг
-            fishing: false,
-            fishTimer: 0,
-            nearShop: false,
-            message: '',
-            messageTimer: 0
+        // ============ КОНСТАНТЫ ============
+        const CROPS = {
+            wheat:  { name: 'Пшеница', emoji: '🌾', growTime: 45, price: 3 },
+            potato: { name: 'Картошка', emoji: '🥔', growTime: 30, price: 2 },
+            carrot: { name: 'Морковь', emoji: '🥕', growTime: 30, price: 2 }
         };
 
-        // Размеры тайла (предполагаем 16x16 в спрайт-листе, увеличим в 3 раза)
-        const TILE = 16;
-        const SCALE = 3;
-        const TILE_SIZE = TILE * SCALE;
+        // ============ СОСТОЯНИЕ ============
+        const state = {
+            coins: 0,
+            inventory: { wheat: 0, potato: 0, carrot: 0 },
+            // Мир
+            worldWidth: 2000,
+            groundY: 0, // отрисовывается в draw
+            camera: { x: 0 },
+            // Персонаж
+            player: {
+                x: 300, y: 0, vx: 0, vy: 0,
+                onGround: false, facing: 1,
+                frame: 0, animTimer: 0
+            },
+            // Грядки
+            plots: [],
+            // Лавка
+            shop: { x: 1600, y: 0, w: 100, h: 100 },
+            // Летучая мышь
+            bat: { x: 0, y: 0, vx: 0, active: false, timer: 5, frame: 0 },
+            // UI
+            nearPlot: null,
+            nearShop: false,
+            seedMenuOpen: false,
+            selectedPlot: null
+        };
 
-        // Остров (центр экрана)
-        let island = { x: 0, y: 0, r: 0 };
+        // Гравитация
+        const GRAVITY = 1800;
+        const MOVE_SPEED = 220;
+        const JUMP_FORCE = -620;
+        const PLAYER_SIZE = 48;
 
+        // Инициализация мира
         function initWorld() {
-            island.x = W / 2;
-            island.y = H / 2;
-            island.r = Math.min(W, H) * 0.35;
+            const groundHeight = H * 0.35;
+            state.groundY = H - groundHeight;
+            state.worldWidth = Math.max(2400, W * 2.5);
 
-            // Персонаж в центре
-            state.player.x = island.x;
-            state.player.y = island.y;
+            // Игрок
+            state.player.x = 300;
+            state.player.y = state.groundY - PLAYER_SIZE;
+            state.player.vy = 0;
+            state.player.onGround = true;
 
-            // Грядки — 3 штуки на острове
+            // Грядки (3 штуки)
             state.plots = [
-                { x: island.x - 80, y: island.y - 40, state: 'empty', timer: 0 },
-                { x: island.x + 80, y: island.y - 40, state: 'empty', timer: 0 },
-                { x: island.x, y: island.y + 80, state: 'empty', timer: 0 }
+                { x: 600,  w: 90, h: 50, y: state.groundY - 50, crops: [] },
+                { x: 800,  w: 90, h: 50, y: state.groundY - 50, crops: [] },
+                { x: 1000, w: 90, h: 50, y: state.groundY - 50, crops: [] }
             ];
+            for (const plot of state.plots) {
+                plot.crops = [
+                    { type: null, timer: 0, ready: false },
+                    { type: null, timer: 0, ready: false },
+                    { type: null, timer: 0, ready: false },
+                    { type: null, timer: 0, ready: false },
+                    { type: null, timer: 0, ready: false }
+                ];
+            }
 
-            // Летучая мышь — стартует за экраном
-            state.bat.x = -100;
-            state.bat.y = -100;
+            // Лавка
+            state.shop.x = state.worldWidth - 500;
+            state.shop.y = state.groundY - state.shop.h;
+
+            // Летучая мышь
+            state.bat.timer = 5;
         }
         initWorld();
         window.addEventListener('resize', () => { resize(); initWorld(); });
 
         // ============ УПРАВЛЕНИЕ ============
-        let joyInput = { x: 0, y: 0 };
-        let keys = {};
+        let input = { left: false, right: false, jump: false };
+
+        // Кнопки на экране
+        function bindBtn(id, key) {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', e => { e.preventDefault(); input[key] = true; });
+            el.addEventListener('touchend', e => { e.preventDefault(); input[key] = false; });
+            el.addEventListener('mousedown', e => { e.preventDefault(); input[key] = true; });
+            el.addEventListener('mouseup', e => { e.preventDefault(); input[key] = false; });
+            el.addEventListener('mouseleave', () => { input[key] = false; });
+        }
+        bindBtn('btn-left', 'left');
+        bindBtn('btn-right', 'right');
+        bindBtn('btn-jump', 'jump');
 
         // Клавиатура
-        window.addEventListener('keydown', e => keys[e.key] = true);
-        window.addEventListener('keyup', e => keys[e.key] = false);
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') input.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd') input.right = true;
+            if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w') input.jump = true;
+        });
+        window.addEventListener('keyup', e => {
+            if (e.key === 'ArrowLeft' || e.key === 'a') input.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd') input.right = false;
+            if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w') input.jump = false;
+        });
 
-        // Джойстик
-        const joyEl = document.getElementById('joystick');
-        const knobEl = document.getElementById('joystick-knob');
-        let joyActive = false;
-        let joyStart = { x: 0, y: 0 };
+        // ============ UI ============
+        const plantBtn = document.getElementById('plant-btn');
+        const seedMenu = document.getElementById('seed-menu');
+        const toastEl = document.getElementById('toast');
+        let toastTimer = 0;
 
-        function joyStartHandler(e) {
-            e.preventDefault();
-            joyActive = true;
-            const touch = e.touches ? e.touches[0] : e;
-            const rect = joyEl.getBoundingClientRect();
-            joyStart.x = rect.left + rect.width / 2;
-            joyStart.y = rect.top + rect.height / 2;
+        function showToast(text, ms = 1800) {
+            toastEl.innerText = text;
+            toastEl.style.display = 'block';
+            toastTimer = ms / 1000;
         }
-        function joyMoveHandler(e) {
-            if (!joyActive) return;
-            e.preventDefault();
-            const touch = e.touches ? e.touches[0] : e;
-            let dx = touch.clientX - joyStart.x;
-            let dy = touch.clientY - joyStart.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            const maxDist = 40;
-            if (dist > maxDist) {
-                dx = dx / dist * maxDist;
-                dy = dy / dist * maxDist;
-            }
-            knobEl.style.transform = `translate(${dx}px, ${dy}px)`;
-            joyInput.x = dx / maxDist;
-            joyInput.y = dy / maxDist;
+
+        function updateUI() {
+            document.getElementById('coins').innerText = state.coins;
+            document.getElementById('inv-wheat').innerText = state.inventory.wheat;
+            document.getElementById('inv-potato').innerText = state.inventory.potato;
+            document.getElementById('inv-carrot').innerText = state.inventory.carrot;
         }
-        function joyEndHandler(e) {
-            joyActive = false;
-            joyInput.x = 0;
-            joyInput.y = 0;
-            knobEl.style.transform = 'translate(0,0)';
-        }
-        joyEl.addEventListener('touchstart', joyStartHandler);
-        joyEl.addEventListener('touchmove', joyMoveHandler);
-        joyEl.addEventListener('touchend', joyEndHandler);
-        joyEl.addEventListener('mousedown', joyStartHandler);
-        window.addEventListener('mousemove', joyMoveHandler);
-        window.addEventListener('mouseup', joyEndHandler);
 
-        // ============ ДЕЙСТВИЕ ============
-        document.getElementById('action-btn').onclick = () => {
-            if (state.fishing) return;
-            // Проверяем ближайшую грядку
-            let closest = null;
-            let minDist = 60;
-            for (const plot of state.plots) {
-                const d = Math.hypot(plot.x - state.player.x, plot.y - state.player.y);
-                if (d < minDist) { minDist = d; closest = plot; }
-            }
-            if (!closest) {
-                showMessage('Подойди к грядке');
-                return;
-            }
-            if (closest.state === 'empty') {
-                closest.state = 'growing';
-                closest.timer = 3; // 3 секунды до созревания
-                showMessage('Посадил 🌱');
-            } else if (closest.state === 'growing') {
-                closest.state = 'ready';
-                showMessage('Полил 💧');
-            } else if (closest.state === 'ready') {
-                state.coins += 1;
-                state.harvest += 1;
-                closest.state = 'empty';
-                showMessage('+1 монета 💰');
-            }
-        };
+        // Кнопка "Посадить"
+        plantBtn.addEventListener('click', () => {
+            if (!state.nearPlot) return;
+            state.selectedPlot = state.nearPlot;
+            state.seedMenuOpen = true;
+            seedMenu.style.display = 'flex';
+            plantBtn.style.display = 'none';
+        });
 
-        // ============ РЫБАЛКА ============
-        document.getElementById('fish-btn').onclick = () => {
-            if (state.fishing) return;
-            // Проверяем, у воды ли
-            const dist = Math.hypot(state.player.x - island.x, state.player.y - island.y);
-            if (dist < island.r - 30) {
-                showMessage('Подойди к краю острова');
-                return;
-            }
-            state.fishing = true;
-            state.fishTimer = 2 + Math.random() * 3;
-            showMessage('Забросил удочку...');
-        };
+        // Выбор семени
+        document.querySelectorAll('.seed-option[data-crop]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cropType = btn.dataset.crop;
+                const plot = state.selectedPlot;
+                if (!plot) return;
+                // Найти свободную ячейку
+                const freeSlot = plot.crops.find(c => !c.type);
+                if (!freeSlot) {
+                    showToast('Грядка заполнена!');
+                    closeSeedMenu();
+                    return;
+                }
+                freeSlot.type = cropType;
+                freeSlot.timer = CROPS[cropType].growTime;
+                freeSlot.ready = false;
+                showToast(`Посадил ${CROPS[cropType].emoji} ${CROPS[cropType].name}`);
+                closeSeedMenu();
+            });
+        });
 
-        function showMessage(text) {
-            state.message = text;
-            state.messageTimer = 2;
+        document.getElementById('seed-close').addEventListener('click', closeSeedMenu);
+
+        function closeSeedMenu() {
+            state.seedMenuOpen = false;
+            seedMenu.style.display = 'none';
+            state.selectedPlot = null;
         }
 
         // ============ ОБНОВЛЕНИЕ ============
         function update(dt) {
             const p = state.player;
+
+            // Горизонтальное движение
+            p.vx = 0;
+            if (input.left)  { p.vx = -MOVE_SPEED; p.facing = -1; }
+            if (input.right) { p.vx =  MOVE_SPEED; p.facing = 1; }
+
+            // Прыжок
+            if (input.jump && p.onGround) {
+                p.vy = JUMP_FORCE;
+                p.onGround = false;
+            }
+
+            // Гравитация
+            p.vy += GRAVITY * dt;
+
             // Движение
-            let mx = joyInput.x;
-            let my = joyInput.y;
-            if (keys['ArrowLeft'] || keys['a']) mx = -1;
-            if (keys['ArrowRight'] || keys['d']) mx = 1;
-            if (keys['ArrowUp'] || keys['w']) my = -1;
-            if (keys['ArrowDown'] || keys['s']) my = 1;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
 
-            const speed = 200;
-            p.moving = (mx !== 0 || my !== 0);
+            // Границы мира
+            if (p.x < 20) p.x = 20;
+            if (p.x > state.worldWidth - 20) p.x = state.worldWidth - 20;
 
-            if (p.moving) {
-                const len = Math.hypot(mx, my);
-                mx /= len; my /= len;
-                let nx = p.x + mx * speed * dt;
-                let ny = p.y + my * speed * dt;
+            // Земля
+            if (p.y + PLAYER_SIZE >= state.groundY) {
+                p.y = state.groundY - PLAYER_SIZE;
+                p.vy = 0;
+                p.onGround = true;
+            }
 
-                // Не выходить за остров
-                const dx = nx - island.x;
-                const dy = ny - island.y;
-                const d = Math.hypot(dx, dy);
-                if (d > island.r - 20) {
-                    const k = (island.r - 20) / d;
-                    nx = island.x + dx * k;
-                    ny = island.y + dy * k;
-                }
-
-                p.x = nx;
-                p.y = ny;
-
-                // Направление
-                if (Math.abs(mx) > Math.abs(my)) {
-                    p.dir = mx > 0 ? 3 : 1; // 1=лево, 3=право
-                } else {
-                    p.dir = my > 0 ? 0 : 2; // 0=низ, 2=верх
-                }
-
-                // Анимация
+            // Анимация
+            if (Math.abs(p.vx) > 0 && p.onGround) {
                 p.animTimer += dt;
                 if (p.animTimer > 0.15) {
                     p.animTimer = 0;
@@ -318,215 +384,363 @@
                 }
             } else {
                 p.frame = 0;
-                p.animTimer = 0;
             }
 
-            // Грядки растут
+            // Камера — следит за игроком
+            const targetCamX = p.x - W / 2;
+            state.camera.x += (targetCamX - state.camera.x) * 0.1;
+            state.camera.x = Math.max(0, Math.min(state.camera.x, state.worldWidth - W));
+
+            // Рост урожая
             for (const plot of state.plots) {
-                if (plot.state === 'growing') {
-                    plot.timer -= dt;
-                    if (plot.timer <= 0) plot.state = 'ready';
+                for (const crop of plot.crops) {
+                    if (crop.type && !crop.ready) {
+                        crop.timer -= dt;
+                        if (crop.timer <= 0) {
+                            crop.ready = true;
+                            crop.timer = 0;
+                        }
+                    }
                 }
             }
 
-            // Рыбалка
-            if (state.fishing) {
-                state.fishTimer -= dt;
-                if (state.fishTimer <= 0) {
-                    state.fishing = false;
-                    if (Math.random() < 0.7) {
-                        state.coins += 3;
-                        showMessage('Поймал рыбу! +3 💰');
-                    } else {
-                        showMessage('Сорвалась...');
+            // Проверка близости к грядке
+            state.nearPlot = null;
+            for (const plot of state.plots) {
+                const plotCenterX = plot.x + plot.w / 2;
+                const dx = Math.abs((p.x + PLAYER_SIZE/2) - plotCenterX);
+                if (dx < plot.w / 2 + 40) {
+                    state.nearPlot = plot;
+                    break;
+                }
+            }
+
+            // Показ кнопки "Посадить" / "Собрать"
+            if (state.seedMenuOpen) {
+                plantBtn.style.display = 'none';
+            } else if (state.nearPlot) {
+                // Если есть готовый урожай — кнопка "Собрать"
+                const hasReady = state.nearPlot.crops.some(c => c.type && c.ready);
+                const hasEmpty = state.nearPlot.crops.some(c => !c.type);
+                if (hasReady) {
+                    plantBtn.innerText = 'Собрать';
+                    plantBtn.style.display = 'block';
+                } else if (hasEmpty) {
+                    plantBtn.innerText = 'Посадить';
+                    plantBtn.style.display = 'block';
+                } else {
+                    plantBtn.style.display = 'none';
+                }
+            } else {
+                plantBtn.style.display = 'none';
+            }
+
+            // Логика кнопки (переназначаем действие)
+            plantBtn.onclick = () => {
+                if (!state.nearPlot) return;
+                const hasReady = state.nearPlot.crops.some(c => c.type && c.ready);
+                if (hasReady) {
+                    // Собрать всё готовое
+                    let collected = 0;
+                    for (const crop of state.nearPlot.crops) {
+                        if (crop.type && crop.ready) {
+                            state.inventory[crop.type] += 1;
+                            crop.type = null;
+                            crop.ready = false;
+                            collected++;
+                        }
                     }
+                    if (collected > 0) {
+                        showToast(`Собрано: ${collected} 🌾🥔🥕`);
+                        updateUI();
+                    }
+                } else {
+                    // Открыть меню посадки
+                    state.selectedPlot = state.nearPlot;
+                    state.seedMenuOpen = true;
+                    seedMenu.style.display = 'flex';
+                    plantBtn.style.display = 'none';
+                }
+            };
+
+            // Проверка близости к лавке
+            const shopCenterX = state.shop.x + state.shop.w / 2;
+            const dxShop = Math.abs((p.x + PLAYER_SIZE/2) - shopCenterX);
+            state.nearShop = dxShop < state.shop.w / 2 + 50;
+
+            // Продажа в лавке (по кнопке "Собрать" если рядом лавка)
+            if (state.nearShop && !state.nearPlot && !state.seedMenuOpen) {
+                const totalItems = state.inventory.wheat + state.inventory.potato + state.inventory.carrot;
+                if (totalItems > 0) {
+                    plantBtn.innerText = 'Продать всё';
+                    plantBtn.style.display = 'block';
+                    plantBtn.onclick = () => {
+                        let earned = 0;
+                        earned += state.inventory.wheat * CROPS.wheat.price;
+                        earned += state.inventory.potato * CROPS.potato.price;
+                        earned += state.inventory.carrot * CROPS.carrot.price;
+                        state.coins += earned;
+                        state.inventory.wheat = 0;
+                        state.inventory.potato = 0;
+                        state.inventory.carrot = 0;
+                        showToast(`Продано за ${earned} 💰`);
+                        updateUI();
+                    };
                 }
             }
 
             // Летучая мышь
             const bat = state.bat;
-            bat.timer -= dt;
-            if (!bat.active && bat.timer <= 0) {
-                bat.active = true;
-                bat.x = Math.random() < 0.5 ? -50 : W + 50;
-                bat.y = 100 + Math.random() * 200;
-                bat.vx = bat.x < 0 ? 80 : -80;
-                bat.vy = 0;
-                bat.duration = 6;
-            }
-            if (bat.active) {
+            if (!bat.active) {
+                bat.timer -= dt;
+                if (bat.timer <= 0) {
+                    bat.active = true;
+                    bat.x = state.camera.x + W + 50;
+                    bat.y = 100 + Math.random() * 150;
+                    bat.vx = -60 - Math.random() * 40;
+                    bat.duration = 12;
+                    bat.timer = 999;
+                }
+            } else {
                 bat.x += bat.vx * dt;
-                bat.y += Math.sin(Date.now() / 300) * 30 * dt;
                 bat.frame += dt * 8;
                 bat.duration -= dt;
                 if (bat.duration <= 0) {
                     bat.active = false;
-                    bat.timer = 10 + Math.random() * 15;
+                    bat.timer = 15 + Math.random() * 20;
                 }
             }
 
-            // Сообщение
-            if (state.messageTimer > 0) state.messageTimer -= dt;
+            // Тост
+            if (toastTimer > 0) {
+                toastTimer -= dt;
+                if (toastTimer <= 0) toastEl.style.display = 'none';
+            }
         }
 
         // ============ ОТРИСОВКА ============
         function draw() {
-            // Фон — тёмно-красный, но светлый
-            ctx.fillStyle = '#6b3a3a';
-            ctx.fillRect(0, 0, W, H);
+            const cam = state.camera.x;
+            const groundY = state.groundY;
+            const groundHeight = H - groundY;
 
-            // Дальний фон — туман
-            const grad = ctx.createRadialGradient(island.x, island.y, island.r * 0.5, island.x, island.y, Math.max(W, H));
-            grad.addColorStop(0, 'rgba(140, 90, 90, 0.6)');
-            grad.addColorStop(1, 'rgba(60, 30, 30, 0.9)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
+            // ==== ФОН: небо (красный градиент) ====
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
+            skyGrad.addColorStop(0, '#7a3a3a');
+            skyGrad.addColorStop(1, '#5a2a2a');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, W, groundY);
 
-            // Остров — земля
-            ctx.beginPath();
-            ctx.arc(island.x, island.y, island.r, 0, Math.PI * 2);
-            ctx.fillStyle = '#8b6f47';
-            ctx.fill();
-            ctx.strokeStyle = '#5a4730';
-            ctx.lineWidth = 4;
-            ctx.stroke();
+            // Дальние силуэты деревьев (параллакс 0.2)
+            ctx.fillStyle = '#3a1a1a';
+            for (let i = 0; i < 20; i++) {
+                const treeX = (i * 300 - cam * 0.2) % (state.worldWidth);
+                const screenX = treeX - cam * 0.2;
+                if (screenX < -100 || screenX > W + 100) continue;
+                drawDeadTree(screenX, groundY, 0.6);
+            }
 
-            // Внутренний круг — трава
-            ctx.beginPath();
-            ctx.arc(island.x, island.y, island.r - 15, 0, Math.PI * 2);
+            // Средние силуэты (параллакс 0.5)
+            ctx.fillStyle = '#2a1010';
+            for (let i = 0; i < 25; i++) {
+                const treeX = (i * 250 - cam * 0.5) % (state.worldWidth);
+                const screenX = treeX - cam * 0.5;
+                if (screenX < -100 || screenX > W + 100) continue;
+                drawDeadTree(screenX, groundY, 0.9);
+            }
+
+            // ==== ЗЕМЛЯ ====
+            // Верхний слой — трава
             ctx.fillStyle = '#6b8f3d';
-            ctx.fill();
-
-            // Грядки
-            for (const plot of state.plots) {
-                ctx.fillStyle = '#5a3a1a';
-                ctx.fillRect(plot.x - 24, plot.y - 24, 48, 48);
-                ctx.strokeStyle = '#3a2510';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(plot.x - 24, plot.y - 24, 48, 48);
-
-                // Растение
-                ctx.font = '32px serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                if (plot.state === 'empty') {
-                    // ничего
-                } else if (plot.state === 'growing') {
-                    ctx.fillText('🌱', plot.x, plot.y);
-                } else if (plot.state === 'ready') {
-                    ctx.fillText('🌾', plot.x, plot.y);
+            ctx.fillRect(0, groundY, W, 8);
+            // Земля
+            ctx.fillStyle = '#5a3a1a';
+            ctx.fillRect(0, groundY + 8, W, groundHeight - 8);
+            // Если есть тайл земли — рисуем его полосой
+            if (assets.ground.complete && assets.ground.naturalWidth > 0) {
+                const tileSize = 64;
+                for (let x = 0; x < W; x += tileSize) {
+                    ctx.drawImage(assets.ground, x, groundY, tileSize, tileSize);
                 }
             }
 
-            // Лавка — домик справа
-            const shopX = island.x + island.r * 0.6;
-            const shopY = island.y - island.r * 0.5;
-            ctx.fillStyle = '#5a3a1a';
-            ctx.fillRect(shopX - 30, shopY - 30, 60, 60);
-            ctx.fillStyle = '#8b2a2a';
-            ctx.beginPath();
-            ctx.moveTo(shopX - 36, shopY - 30);
-            ctx.lineTo(shopX, shopY - 55);
-            ctx.lineTo(shopX + 36, shopY - 30);
-            ctx.closePath();
-            ctx.fill();
-            ctx.font = '20px serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('🏪', shopX, shopY + 5);
-
-            // Проверка близости к лавке
-            state.nearShop = Math.hypot(state.player.x - shopX, state.player.y - shopY) < 70;
-            if (state.nearShop) {
-                ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                ctx.font = 'bold 14px sans-serif';
-                ctx.fillText('Лавка (нажми действие)', shopX, shopY + 45);
+            // ==== ГРЯДКИ ====
+            for (const plot of state.plots) {
+                const screenX = plot.x - cam;
+                if (screenX < -200 || screenX > W + 200) continue;
+                drawPlot(screenX, plot.y, plot.w, plot.h, plot);
             }
 
-            // Персонаж
+            // ==== ЛАВКА ====
+            const shopScreenX = state.shop.x - cam;
+            if (shopScreenX > -200 && shopScreenX < W + 200) {
+                drawShop(shopScreenX, state.shop.y, state.shop.w, state.shop.h);
+                // Подсказка
+                if (state.nearShop) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Лавка', shopScreenX + state.shop.w/2, state.shop.y - 10);
+                }
+            }
+
+            // ==== ПЕРСОНАЖ ====
             drawPlayer();
 
-            // Летучая мышь
+            // ==== ЛЕТУЧАЯ МЫШЬ ====
             if (state.bat.active) drawBat();
 
-            // Сообщение
-            if (state.messageTimer > 0) {
-                ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                const msgWidth = ctx.measureText(state.message).width + 40;
-                ctx.fillRect(W/2 - msgWidth/2, H - 200, msgWidth, 40);
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 16px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(state.message, W/2, H - 175);
-            }
+            // ==== ВИНЬЕТКА (атмосфера) ====
+            const vignette = ctx.createRadialGradient(W/2, H/2, W*0.3, W/2, H/2, W*0.7);
+            vignette.addColorStop(0, 'rgba(0,0,0,0)');
+            vignette.addColorStop(1, 'rgba(0,0,0,0.35)');
+            ctx.fillStyle = vignette;
+            ctx.fillRect(0, 0, W, H);
+        }
 
-            // Рыбалка
-            if (state.fishing) {
-                ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillRect(W/2 - 100, H/2 - 30, 200, 60);
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 18px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('🎣 Ждём...', W/2, H/2 + 5);
+        function drawDeadTree(x, baseY, scale) {
+            ctx.save();
+            ctx.translate(x, baseY);
+            ctx.scale(scale, scale);
+            // Ствол
+            ctx.fillRect(-6, -80, 12, 80);
+            // Ветки
+            ctx.fillRect(-30, -70, 25, 6);
+            ctx.fillRect(5, -60, 28, 5);
+            ctx.fillRect(-20, -90, 18, 5);
+            ctx.fillRect(8, -95, 22, 5);
+            ctx.restore();
+        }
+
+        function drawPlot(x, y, w, h, plot) {
+            // Земля грядки
+            ctx.fillStyle = '#4a2a10';
+            ctx.fillRect(x, y, w, h);
+            ctx.fillStyle = '#3a1f08';
+            ctx.fillRect(x, y, w, 6);
+            // Борозды
+            ctx.strokeStyle = '#2a1505';
+            ctx.lineWidth = 2;
+            for (let i = 1; i < 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(x + 4, y + i * (h / 5));
+                ctx.lineTo(x + w - 4, y + i * (h / 5));
+                ctx.stroke();
             }
+            // Ячейки с растениями — 5 штук в ряд
+            const slotW = (w - 8) / 5;
+            for (let i = 0; i < 5; i++) {
+                const crop = plot.crops[i];
+                const cx = x + 4 + i * slotW + slotW / 2;
+                const cy = y + h / 2;
+                if (!crop) continue;
+                if (!crop.type) continue;
+                // Растение
+                ctx.font = '24px serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                if (crop.ready) {
+                    ctx.fillText(CROPS[crop.type].emoji, cx, cy - 8);
+                } else {
+                    // Растущее — показываем прогресс
+                    ctx.fillText('🌱', cx, cy);
+                    // Полоска прогресса
+                    const progress = 1 - (crop.timer / CROPS[crop.type].growTime);
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.fillRect(cx - 12, cy + 14, 24, 4);
+                    ctx.fillStyle = '#7cb342';
+                    ctx.fillRect(cx - 12, cy + 14, 24 * progress, 4);
+                }
+            }
+        }
+
+        function drawShop(x, y, w, h) {
+            // Домик
+            ctx.fillStyle = '#6b4a2a';
+            ctx.fillRect(x, y + h * 0.4, w, h * 0.6);
+            // Крыша
+            ctx.fillStyle = '#8b2a2a';
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y + h * 0.4);
+            ctx.lineTo(x + w/2, y);
+            ctx.lineTo(x + w + 10, y + h * 0.4);
+            ctx.closePath();
+            ctx.fill();
+            // Дверь
+            ctx.fillStyle = '#3a1f08';
+            ctx.fillRect(x + w/2 - 12, y + h * 0.65, 24, h * 0.35);
+            // Окно
+            ctx.fillStyle = '#ffd54f';
+            ctx.fillRect(x + 15, y + h * 0.55, 18, 18);
+            ctx.fillRect(x + w - 33, y + h * 0.55, 18, 18);
+            // Вывеска
+            ctx.font = '28px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏪', x + w/2, y + h * 0.55);
         }
 
         function drawPlayer() {
             const p = state.player;
-            const size = 32;
-            // Пока спрайт не загрузился — рисуем квадратик
-            if (!playerImg.complete || playerImg.naturalWidth === 0) {
+            const screenX = p.x - state.camera.x;
+            const screenY = p.y;
+
+            if (!assets.player.complete || assets.player.naturalWidth === 0) {
+                // Заглушка — квадрат
                 ctx.fillStyle = '#e8a86b';
-                ctx.fillRect(p.x - size/2, p.y - size, size, size);
+                ctx.fillRect(screenX, screenY, PLAYER_SIZE, PLAYER_SIZE);
                 ctx.fillStyle = '#000';
-                ctx.fillRect(p.x - 8, p.y - 22, 4, 4);
-                ctx.fillRect(p.x + 4, p.y - 22, 4, 4);
+                ctx.fillRect(screenX + 12, screenY + 16, 6, 6);
+                ctx.fillRect(screenX + 30, screenY + 16, 6, 6);
                 return;
             }
-            // Спрайт-лист: 4 столбца (кадры) × 4 строки (направления)
-            const fw = playerImg.width / 4;
-            const fh = playerImg.height / 4;
-            // p.dir: 0=низ, 1=лево, 2=верх, 3=право
-            // В спрайт-листе обычно порядок: 0=низ, 1=лево, 2=право, 3=верх
-            // Но у нас упрощённо — совместим с исходником
-            const srcX = p.frame * fw;
-            const srcY = p.dir * fh;
-            const dw = fw * SCALE;
-            const dh = fh * SCALE;
+
+            // Спрайт-лист 4×4
+            const fw = assets.player.width / 4;
+            const fh = assets.player.height / 4;
+            // Используем строку 2 (вправо) или строку 1 (влево)
+            const row = p.facing > 0 ? 1 : 2; // 0=низ, 1=лево, 2=право, 3=верх (примерно)
+            const frame = p.frame % 4;
+            const srcX = frame * fw;
+            const srcY = row * fh;
+            const dw = PLAYER_SIZE * 1.2;
+            const dh = PLAYER_SIZE * 1.2;
             ctx.drawImage(
-                playerImg,
+                assets.player,
                 srcX, srcY, fw, fh,
-                p.x - dw/2, p.y - dh + 10, dw, dh
+                screenX + PLAYER_SIZE/2 - dw/2,
+                screenY + PLAYER_SIZE - dh,
+                dw, dh
             );
         }
 
         function drawBat() {
-            const b = state.bat;
-            if (!batImg.complete || batImg.naturalWidth === 0) {
+            const bat = state.bat;
+            const screenX = bat.x - state.camera.x;
+            const screenY = bat.y;
+            if (!assets.bat.complete || assets.bat.naturalWidth === 0) {
                 ctx.fillStyle = '#6a4a6a';
-                ctx.fillRect(b.x - 12, b.y - 12, 24, 24);
+                ctx.fillRect(screenX - 15, screenY - 10, 30, 20);
                 return;
             }
-            const fw = batImg.width / 4;
-            const fh = batImg.height / 4;
-            const frame = Math.floor(b.frame) % 4;
+            const fw = assets.bat.width / 4;
+            const fh = assets.bat.height / 4;
+            const frame = Math.floor(bat.frame) % 4;
             const srcX = frame * fw;
             const srcY = 0;
-            const dw = fw * 2;
-            const dh = fh * 2;
-            ctx.drawImage(batImg, srcX, srcY, fw, fh, b.x - dw/2, b.y - dh/2, dw, dh);
+            const dw = 50, dh = 50;
+            ctx.drawImage(assets.bat, srcX, srcY, fw, fh, screenX - dw/2, screenY - dh/2, dw, dh);
         }
 
         // ============ ЦИКЛ ============
         let lastTime = 0;
         function loop(time) {
-            const dt = Math.min((time - lastTime) / 1000, 0.1);
+            const dt = Math.min((time - lastTime) / 1000, 0.05);
             lastTime = time;
             update(dt);
             draw();
-            document.getElementById('coins').innerText = state.coins;
-            document.getElementById('harvest').innerText = state.harvest;
             requestAnimationFrame(loop);
         }
+        updateUI();
         requestAnimationFrame(loop);
     </script>
 </body>
