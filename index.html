@@ -523,13 +523,25 @@
             const cam = state.camera.x;
             const groundY = state.groundY;
             const groundHeight = H - groundY;
+            
+            const assets = {
+    player: new Image(),
+    ground: new Image(),
+    bat: new Image(),
+    background: new Image()  // ← добавь эту строчку
+};
+assets.player.src = 'player.png';
+assets.ground.src = 'ground.png';
+assets.bat.src = 'bat.png';
+assets.background.src = 'background.png';  // ← и эту
 
-            // ==== ФОН: небо (красный градиент) ====
-            const skyGrad = ctx.createLinearGradient(0, 0, 0, groundY);
-            skyGrad.addColorStop(0, '#7a3a3a');
-            skyGrad.addColorStop(1, '#5a2a2a');
-            ctx.fillStyle = skyGrad;
-            ctx.fillRect(0, 0, W, groundY);
+          // ==== ФОН: картинка ====
+if (assets.background.complete && assets.background.naturalWidth > 0) {
+    ctx.drawImage(assets.background, 0, 0, W, groundY);
+} else {
+    ctx.fillStyle = '#5a2a2a';
+    ctx.fillRect(0, 0, W, groundY);
+}
 
             // Дальние силуэты деревьев (параллакс 0.2)
             ctx.fillStyle = '#3a1a1a';
