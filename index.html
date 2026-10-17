@@ -20,30 +20,31 @@
         .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
         /* Сердца (HP) */
-        .hp-bar { position: absolute; top: 10px; left: 10px; display: flex; gap: 2px; }
+        .hp-bar { position: absolute; top: 10px; left: 10px; display: flex; gap: 2px; z-index: 10; }
         .heart { font-size: 20px; color: #ff3333; text-shadow: 1px 1px 0 #000; }
         .heart.empty { color: #555; }
 
-        /* Инвентарь */
-        .inventory { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; }
+        /* Инвентарь (всегда виден) */
+        .inventory { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 10; }
         .inv-slot {
-            width: 40px; height: 40px; border: 2px solid #888;
-            background: rgba(0,0,0,0.5); border-radius: 5px;
+            width: 50px; height: 50px; border: 2px solid #888;
+            background: rgba(0,0,0,0.5); border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
+            position: relative;
         }
-        .inv-slot img { width: 32px; height: 32px; image-rendering: pixelated; }
-        .inv-slot.empty { display: none; }
+        .inv-slot img { width: 100%; height: 100%; object-fit: contain; display: none; }
+        .inv-slot.filled img { display: block; }
 
         /* Уведомление (Тост) */
         .toast {
-            position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px;
-            border-radius: 10px; border: 1px solid #aaa; font-weight: bold;
-            display: none; text-align: center; font-size: 16px;
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: #ffd54f; padding: 10px 20px;
+            border-radius: 10px; border: 2px solid #ffd54f; font-weight: bold;
+            display: none; text-align: center; font-size: 18px; z-index: 20;
         }
 
         /* Кнопки управления */
-        .controls { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; pointer-events: auto; }
+        .controls { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; pointer-events: auto; z-index: 10;}
         .dpad { display: flex; gap: 10px; }
         .btn {
             width: 65px; height: 65px; border-radius: 50%;
@@ -54,29 +55,29 @@
         .btn-action { background: rgba(200,50,50,0.6); border-color: #f44336; font-size: 20px;}
         .btn-jump { background: rgba(50,200,50,0.6); border-color: #4caf50; }
         
-        /* Кнопка "Взять" */
-        .btn-take {
-            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
-            padding: 12px 24px; border-radius: 10px; background: #ffd54f; color: #000;
-            font-weight: bold; font-size: 16px; border: 2px solid #fff; display: none; pointer-events: auto;
-        }
-
-        /* Диалоги */
+        /* Диалоги над головой */
         .dialog-box {
-            position: absolute; bottom: 100px; left: 10%; width: 80%;
+            position: absolute;
+            transform: translate(-50%, -100%);
             background: rgba(20,20,30,0.95); border: 3px solid #7cb342;
             border-radius: 10px; padding: 15px; color: #fff; display: none;
             pointer-events: auto; font-size: 15px; line-height: 1.4;
+            max-width: 300px; width: 80%; z-index: 20;
+        }
+        .dialog-box::after {
+            content: ''; position: absolute; bottom: -15px; left: 50%; margin-left: -15px;
+            border-width: 15px 15px 0; border-style: solid; border-color: #7cb342 transparent transparent;
         }
         .dialog-name { color: #ffd54f; font-weight: bold; margin-bottom: 5px; font-size: 14px;}
-        .dialog-next { text-align: right; color: #aaa; font-size: 12px; margin-top: 10px; animation: blink 1s infinite; cursor: pointer;}
+        .dialog-text { margin-bottom: 10px; }
+        .dialog-next { text-align: right; color: #4caf50; font-size: 12px; animation: blink 1s infinite; cursor: pointer; font-weight: bold; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
         /* Экран смерти */
         .death-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none; flex-direction: column;
-            align-items: center; justify-content: center; pointer-events: auto;
+            align-items: center; justify-content: center; pointer-events: auto; z-index: 30;
         }
         .death-text { color: #f44336; font-size: 32px; font-weight: bold; margin-bottom: 20px; text-shadow: 2px 2px 0 #000;}
         .btn-restart {
@@ -93,19 +94,17 @@
         <div class="hp-bar" id="hp-bar"></div>
         
         <div class="inventory">
-            <div class="inv-slot empty" id="slot-sword"><img src="sword.png" alt="Меч"></div>
-            <div class="inv-slot empty" id="slot-staff"><img src="staff.png" alt="Посох"></div>
+            <div class="inv-slot" id="slot-sword"><img src="sword.png" alt="Меч"></div>
+            <div class="inv-slot" id="slot-staff"><img src="staff.png" alt="Посох"></div>
         </div>
 
         <div class="toast" id="toast">Предмет получен!</div>
+    </div>
 
-        <div class="dialog-box" id="dialog-box">
-            <div class="dialog-name" id="dialog-name">Волшебник</div>
-            <div class="dialog-text" id="dialog-text">Привет...</div>
-            <div class="dialog-next" id="dialog-next">Нажми, чтобы продолжить ▼</div>
-        </div>
-
-        <button class="btn-take" id="btn-take">Взять</button>
+    <div class="dialog-box" id="dialog-box">
+        <div class="dialog-name" id="dialog-name">Волшебник</div>
+        <div class="dialog-text" id="dialog-text">Привет...</div>
+        <div class="dialog-next" id="dialog-next">Нажми, чтобы продолжить ▼</div>
     </div>
 
     <div class="controls">
@@ -149,7 +148,7 @@
 
         // Константы
         const GRAVITY = 1800, SPEED = 250, JUMP = -650;
-        const GROUND_Y_RATIO = 0.8; // Земля на 80% высоты экрана
+        let GROUND_Y = 0; 
 
         // Состояние игры
         let state = {};
@@ -158,15 +157,15 @@
             state = {
                 location: 1, // 1 = старт, 2 = лес
                 camera: { x: 0 },
-                player: { x: 100, y: 0, vx: 0, vy: 0, onGround: false, facing: 1, frame: 0, animTimer: 0, hp: 9, maxHp: 9, hasSword: false, hasStaff: false, attacking: 0, attackTimer: 0, hitEnemies: [] },
-                worldWidth: 3000,
+                player: { x: 100, y: 0, vx: 0, vy: 0, onGround: false, facing: 1, frame: 0, animTimer: 0, hp: 9, maxHp: 9, hasSword: false, hasStaff: false, attacking: 0, attackTimer: 0, hitEnemies: [], invincible: 0 },
+                worldWidth: 2000,
                 groundY: 0,
-                objects: [], // Предметы на земле
                 npcs: [], // Волшебники
                 enemies: [],
                 projectiles: [],
-                dialog: { active: false, lines: [], index: 0, onComplete: null },
-                scriptStage: 0, // 0=старт, 1=убит скорпион, 2=в лесу
+                dialog: { active: false, lines: [], index: 0, onComplete: null, x: 0, y: 0 },
+                scriptStage: 0, // 0=старт, 1=бой, 2=лес
+                scorpionSpawned: false,
                 dead: false
             };
             
@@ -178,16 +177,17 @@
 
             // Волшебник 1
             state.npcs.push({
-                id: 'wizard1', x: 300, y: state.groundY - 80, w: 64, h: 80,
-                img: 'wizard', visible: true, interactable: true
+                id: 'wizard1', x: 300, y: state.groundY - 100, w: 100, h: 120,
+                img: 'wizard', visible: true
             });
 
             updateUI();
         }
 
         function resizeWorld() {
-            state.groundY = H * GROUND_Y_RATIO;
-            state.worldWidth = Math.max(W * 3, 2500);
+            GROUND_Y = H * 0.85; // Земля внизу
+            state.groundY = GROUND_Y;
+            state.worldWidth = Math.max(W * 2.5, 2000);
             if (state.location === 2) state.worldWidth = W * 2;
         }
         window.addEventListener('resize', () => { resize(); resizeWorld(); });
@@ -204,22 +204,28 @@
                 hpBar.appendChild(heart);
             }
             // Инвентарь
-            document.getElementById('slot-sword').className = 'inv-slot ' + (state.player.hasSword ? '' : 'empty');
-            document.getElementById('slot-staff').className = 'inv-slot ' + (state.player.hasStaff ? '' : 'empty');
+            document.getElementById('slot-sword').className = 'inv-slot ' + (state.player.hasSword ? 'filled' : '');
+            document.getElementById('slot-staff').className = 'inv-slot ' + (state.player.hasStaff ? 'filled' : '');
         }
 
         function showToast(text) {
             const toast = document.getElementById('toast');
             toast.innerText = text;
             toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+            setTimeout(() => { toast.style.display = 'none'; }, 2500);
         }
 
-        function showDialog(name, lines, onComplete) {
-            state.dialog = { active: true, name: name, lines: lines, index: 0, onComplete: onComplete };
+        function showDialog(name, lines, x, y, onComplete) {
+            state.dialog = { active: true, name: name, lines: lines, index: 0, onComplete: onComplete, x: x, y: y };
             document.getElementById('dialog-box').style.display = 'block';
             document.getElementById('dialog-name').innerText = name;
             document.getElementById('dialog-text').innerText = lines[0];
+            
+            // Позиция над головой
+            const scrX = x - state.camera.x;
+            const box = document.getElementById('dialog-box');
+            box.style.left = scrX + 'px';
+            box.style.top = (y - 20) + 'px';
         }
 
         document.getElementById('dialog-next').addEventListener('click', () => {
@@ -259,21 +265,6 @@
             if (e.key === ' ') input.attack = false;
         });
 
-        // Кнопка "Взять"
-        document.getElementById('btn-take').addEventListener('click', () => {
-            const p = state.player;
-            for (let i = 0; i < state.objects.length; i++) {
-                const obj = state.objects[i];
-                if (Math.abs(p.x - obj.x) < 60 && !obj.taken) {
-                    obj.taken = true;
-                    if (obj.type === 'sword') { p.hasSword = true; showToast('Получен предмет: Меч'); }
-                    if (obj.type === 'staff') { p.hasStaff = true; showToast('Получен предмет: Посох'); }
-                    updateUI();
-                    break;
-                }
-            }
-        });
-
         // Рестарт
         document.getElementById('btn-restart').addEventListener('click', () => {
             document.getElementById('death-screen').style.display = 'none';
@@ -282,82 +273,75 @@
 
         // ============ ЛОГИКА ============
         function update(dt) {
-            if (state.dead || state.dialog.active) {
-                state.player.vx = 0; state.player.vy = 0; return;
-            }
-
+            if (state.dead) return;
+            
             const p = state.player;
 
-            // Движение
-            p.vx = 0;
-            if (input.left) { p.vx = -SPEED; p.facing = -1; }
-            if (input.right) { p.vx = SPEED; p.facing = 1; }
-            if (input.jump && p.onGround) { p.vy = JUMP; p.onGround = false; }
+            if (!state.dialog.active) {
+                // Движение
+                p.vx = 0;
+                if (input.left) { p.vx = -SPEED; p.facing = -1; }
+                if (input.right) { p.vx = SPEED; p.facing = 1; }
+                if (input.jump && p.onGround) { p.vy = JUMP; p.onGround = false; }
 
-            p.vy += GRAVITY * dt;
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
+                p.vy += GRAVITY * dt;
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
 
-            // Границы
-            if (p.x < 20) p.x = 20;
-            if (p.x > state.worldWidth - 20) p.x = state.worldWidth - 20;
+                // Границы
+                if (p.x < 20) p.x = 20;
+                if (p.x > state.worldWidth - 20) p.x = state.worldWidth - 20;
 
-            // Земля
-            if (p.y + 64 >= state.groundY) {
-                p.y = state.groundY - 64;
-                p.vy = 0;
-                p.onGround = true;
+                // Земля
+                if (p.y + 64 >= state.groundY) {
+                    p.y = state.groundY - 64;
+                    p.vy = 0;
+                    p.onGround = true;
+                }
+
+                // Анимация
+                if (Math.abs(p.vx) > 0 && p.onGround) {
+                    p.animTimer += dt;
+                    if (p.animTimer > 0.15) { p.animTimer = 0; p.frame = (p.frame + 1) % 4; }
+                } else { p.frame = 0; }
+
+                // Атака
+                if (input.attack && p.hasSword && p.attackTimer <= 0) {
+                    p.attackTimer = 0.5;
+                    p.attacking = 0.3;
+                    p.hitEnemies = [];
+                }
+                if (p.attackTimer > 0) { p.attackTimer -= dt; p.attacking -= dt; }
+                if (input.attack) input.attack = false;
             }
 
-            // Анимация
-            if (Math.abs(p.vx) > 0 && p.onGround) {
-                p.animTimer += dt;
-                if (p.animTimer > 0.15) { p.animTimer = 0; p.frame = (p.frame + 1) % 4; }
-            } else { p.frame = 0; }
-
-            // Атака
-            if (input.attack && p.hasSword && p.attackTimer <= 0) {
-                p.attackTimer = 0.5;
-                p.attacking = 0.3;
-                p.hitEnemies = [];
-            }
-            if (p.attackTimer > 0) { p.attackTimer -= dt; p.attacking -= dt; }
-            if (input.attack) input.attack = false; // Сброс, чтобы не спамить
-
-            // Проверка кнопки "Взять"
-            let showTake = false;
-            for (const obj of state.objects) {
-                if (!obj.taken && Math.abs(p.x - obj.x) < 60) showTake = true;
-            }
-            document.getElementById('btn-take').style.display = showTake ? 'block' : 'none';
-
-            // Сюжет: Волшебник 1
+            // Сюжет: Волшебник 1 (Старт)
             const wiz = state.npcs.find(n => n.id === 'wizard1');
-            if (wiz && wiz.visible && state.scriptStage === 0) {
-                if (Math.abs(p.x - wiz.x) < 80 && !state.dialog.active) {
-                    wiz.visible = false; // Исчезает для диалога
+            if (wiz && wiz.visible && state.scriptStage === 0 && !state.dialog.active) {
+                if (Math.abs(p.x - wiz.x) < 120) {
                     showDialog('Волшебник', [
                         'Добро пожаловать в мир Ashfield.',
                         'Думаю, тебе пригодится этот меч.',
                         'В этом мире множество враждебных существ.',
                         'Будь осторожен.',
                         'Вперёд!'
-                    ], () => {
+                    ], wiz.x + 50, wiz.y, () => {
                         p.hasSword = true;
                         showToast('Получен предмет: Меч');
                         updateUI();
-                        state.scriptStage = 1; // Переход к скорпиону
+                        state.scriptStage = 1; 
                     });
                 }
             }
 
             // Сюжет: Скорпион
-            if (state.scriptStage === 1 && state.enemies.length === 0 && !state.dialog.active) {
-                if (p.x > 500) { // На 30-м блоке
+            if (state.scriptStage === 1 && !state.scorpionSpawned && !state.dialog.active) {
+                if (p.x > 600) { 
+                    state.scorpionSpawned = true; // Спавним ОДИН раз
                     state.enemies.push({
-                        type: 'scorpion', x: p.x + 400, y: state.groundY - 60,
+                        type: 'scorpion', x: p.x + 600, y: state.groundY - 64,
                         vx: 0, vy: 0, hp: 10, maxHp: 10, facing: -1,
-                        shootTimer: 2, alive: true, frame: 0
+                        shootTimer: 2, alive: true, frame: 0, hitCooldown: 0
                     });
                 }
             }
@@ -365,8 +349,11 @@
             // Логика врагов
             for (const enemy of state.enemies) {
                 if (!enemy.alive) continue;
+                if (enemy.hitCooldown > 0) enemy.hitCooldown -= dt;
+
                 // Движение к игроку
-                if (Math.abs(enemy.x - p.x) > 100) {
+                let distToPlayer = Math.abs(enemy.x - p.x);
+                if (distToPlayer > 60) {
                     enemy.vx = (p.x > enemy.x) ? 80 : -80;
                     enemy.facing = enemy.vx > 0 ? 1 : -1;
                 } else {
@@ -374,16 +361,24 @@
                 }
                 enemy.x += enemy.vx * dt;
 
-                // Стрельба
+                // Стрельба (20 блоков = 1600 пикселей)
                 enemy.shootTimer -= dt;
-                if (enemy.shootTimer <= 0 && Math.abs(enemy.x - p.x) < 400) {
+                if (enemy.shootTimer <= 0 && distToPlayer < 1600) {
                     enemy.shootTimer = 2;
                     state.projectiles.push({
-                        x: enemy.x, y: enemy.y + 20, vx: enemy.facing * 300, vy: 0, alive: true
+                        x: enemy.x + 32, y: enemy.y + 32, vx: enemy.facing * 400, vy: 0, alive: true
                     });
                 }
 
-                // Проверка удара
+                // Урон при касании
+                if (distToPlayer < 60 && Math.abs(enemy.y - p.y) < 80 && enemy.hitCooldown <= 0) {
+                    p.hp -= 1;
+                    enemy.hitCooldown = 1; // Секунда неуязвимости
+                    updateUI();
+                    if (p.hp <= 0) die();
+                }
+
+                // Проверка удара игрока
                 if (p.attacking > 0 && !p.hitEnemies.includes(enemy)) {
                     const hitX = p.x + (p.facing * 60);
                     if (Math.abs(hitX - enemy.x) < 60 && Math.abs(p.y - enemy.y) < 80) {
@@ -391,30 +386,13 @@
                         p.hitEnemies.push(enemy);
                         if (enemy.hp <= 0) {
                             enemy.alive = false;
+                            // Задержка перед появлением волшебника
                             setTimeout(() => {
                                 if (state.scriptStage === 1) {
-                                    showDialog('Волшебник', [
-                                        'Вижу, ты справился со скорпионом, молодец.',
-                                        'Теперь я могу доверить тебе этот посох.',
-                                        'Этот посох позволяет переходить в другие миры.',
-                                        'Но использовать его ты сможешь...',
-                                        'Только когда накопишь достаточно опыта.',
-                                        'Но давай немного поменяем обстановку.'
-                                    ], () => {
-                                        p.hasStaff = true;
-                                        showToast('Получен предмет: Посох');
-                                        updateUI();
-                                        state.scriptStage = 2;
-                                        // Телепорт в лес
-                                        setTimeout(() => {
-                                            state.location = 2;
-                                            state.worldWidth = W * 2;
-                                            p.x = 100;
-                                            p.y = state.groundY - 64;
-                                            state.enemies = [];
-                                            state.npcs = []; // Убираем волшебника
-                                            showToast('Переход в лес...');
-                                        }, 1000);
+                                    state.scriptStage = 3; // Защита от повторного вызова
+                                    // Волшебник появляется рядом
+                                    state.npcs.push({
+                                        id: 'wizard2', x: p.x + 150, y: state.groundY - 100, w: 100, h: 120, img: 'wizard', visible: true
                                     });
                                 }
                             }, 2000);
@@ -424,25 +402,68 @@
             }
             state.enemies = state.enemies.filter(e => e.alive || e.hp > 0);
 
-            // Логика снарядов (фаерболов)
+            // Волшебник 2 (После боя)
+            const wiz2 = state.npcs.find(n => n.id === 'wizard2');
+            if (wiz2 && wiz2.visible && state.scriptStage === 3 && !state.dialog.active) {
+                if (Math.abs(p.x - wiz2.x) < 120) {
+                    state.scriptStage = 4; // Чтобы не спамил
+                    showDialog('Волшебник', [
+                        'Вижу, ты справился со скорпионом, молодец.',
+                        'Теперь я могу доверить тебе этот посох.',
+                        'Этот посох позволяет переходить в другие миры.',
+                        'Но использовать его ты сможешь...',
+                        'Только когда накопишь достаточно опыта.',
+                        'Но давай немного поменяем обстановку.'
+                    ], wiz2.x + 50, wiz2.y, () => {
+                        p.hasStaff = true;
+                        showToast('Получен предмет: Посох');
+                        updateUI();
+                        setTimeout(() => {
+                            state.location = 2;
+                            state.worldWidth = W * 2;
+                            p.x = 100;
+                            p.y = state.groundY - 64;
+                            state.enemies = [];
+                            state.npcs = []; // Исчезают
+                            state.scriptStage = 5;
+                            showToast('Переход в лес...');
+                        }, 1500);
+                    });
+                }
+            }
+
+            // Логика снарядов
             for (const proj of state.projectiles) {
                 proj.x += proj.vx * dt;
-                if (Math.abs(proj.x - (p.x + 30)) < 30 && Math.abs(proj.y - (p.y + 30)) < 40) {
+                if (Math.abs(proj.x - (p.x + 30)) < 40 && Math.abs(proj.y - (p.y + 30)) < 50) {
                     proj.alive = false;
-                    p.hp -= 1;
-                    updateUI();
-                    if (p.hp <= 0) {
-                        state.dead = true;
-                        document.getElementById('death-screen').style.display = 'flex';
+                    if (p.invincible <= 0) {
+                        p.hp -= 1;
+                        p.invincible = 1.0; // 1 сек неуязвимости
+                        updateUI();
+                        if (p.hp <= 0) die();
                     }
                 }
             }
-            state.projectiles = state.projectiles.filter(pr => pr.alive && pr.x > 0 && pr.x < state.worldWidth);
+            state.projectiles = state.projectiles.filter(pr => pr.alive && pr.x > -100 && pr.x < state.worldWidth + 100);
+            
+            if (p.invincible > 0) p.invincible -= dt;
 
             // Камера
             const targetCam = p.x - W / 2;
             state.camera.x += (targetCam - state.camera.x) * 10 * dt;
             state.camera.x = Math.max(0, Math.min(state.camera.x, state.worldWidth - W));
+            
+            // Обновляем позицию диалога при движении камеры
+            if (state.dialog.active) {
+                const box = document.getElementById('dialog-box');
+                box.style.left = (state.dialog.x - state.camera.x) + 'px';
+            }
+        }
+
+        function die() {
+            state.dead = true;
+            document.getElementById('death-screen').style.display = 'flex';
         }
 
         // ============ ОТРИСОВКА ============
@@ -450,44 +471,44 @@
             const cam = state.camera.x;
             const groundY = state.groundY;
 
-            // 1. Фон (весь экран)
+            // 1. Фон (Растянут на весь экран)
             const bgImg = state.location === 1 ? assets.bg : assets.forest;
             if (bgImg.complete && bgImg.naturalWidth > 0) {
-                // Растягиваем на весь экран
-                ctx.drawImage(bgImg, 0, 0, W, H);
+                ctx.drawImage(bgImg, 0, 0, W, H); // Рисуем на весь экран
             } else {
                 ctx.fillStyle = state.location === 1 ? '#5a2a2a' : '#2e4a2e';
                 ctx.fillRect(0, 0, W, H);
             }
+            
+            // Добавляем темную полосу снизу, чтобы персонаж не сливался с фоном (опционально)
+            // ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(0, H*0.85, W, H*0.15);
 
-            // 2. Земля
-            ctx.fillStyle = '#3a1f08';
-            ctx.fillRect(0, groundY, W, H - groundY);
-            ctx.fillStyle = '#6b8f3d';
-            ctx.fillRect(0, groundY, W, 10);
-
-            // 3. Волшебник
+            // 2. Волшебники
             for (const npc of state.npcs) {
                 if (!npc.visible) continue;
                 const scrX = npc.x - cam;
-                if (scrX > -100 && scrX < W + 100) {
+                if (scrX > -200 && scrX < W + 200) {
+                    ctx.save();
+                    // Убираем белый фон (магия)
+                    ctx.filter = 'brightness(1.1) contrast(1.1)'; 
                     if (assets.wizard.complete && assets.wizard.naturalWidth > 0) {
                         ctx.drawImage(assets.wizard, scrX, npc.y, npc.w, npc.h);
                     } else {
                         ctx.fillStyle = '#4a4aff'; ctx.fillRect(scrX, npc.y, npc.w, npc.h);
                     }
+                    ctx.restore();
                 }
             }
 
-            // 4. Враги
+            // 3. Враги
             for (const enemy of state.enemies) {
                 if (!enemy.alive) continue;
                 const scrX = enemy.x - cam;
-                if (scrX > -100 && scrX < W + 100) {
+                if (scrX > -200 && scrX < W + 200) {
                     if (assets.scorpion.complete && assets.scorpion.naturalWidth > 0) {
                         ctx.save();
                         if (enemy.facing === -1) {
-                            ctx.translate(scrX + 60, enemy.y);
+                            ctx.translate(scrX + 64, enemy.y);
                             ctx.scale(-1, 1);
                             ctx.drawImage(assets.scorpion, 0, 0, 64, 64);
                         } else {
@@ -498,49 +519,46 @@
                         ctx.fillStyle = '#f44336'; ctx.fillRect(scrX, enemy.y, 64, 64);
                     }
                     // HP бар
-                    ctx.fillStyle = '#000'; ctx.fillRect(scrX, enemy.y - 10, 64, 6);
-                    ctx.fillStyle = '#f44336'; ctx.fillRect(scrX, enemy.y - 10, 64 * (enemy.hp / enemy.maxHp), 6);
+                    ctx.fillStyle = '#000'; ctx.fillRect(scrX, enemy.y - 15, 64, 8);
+                    ctx.fillStyle = '#f44336'; ctx.fillRect(scrX, enemy.y - 15, 64 * (enemy.hp / enemy.maxHp), 8);
                 }
             }
 
-            // 5. Снаряды
+            // 4. Снаряды (Фаерболы)
             for (const proj of state.projectiles) {
                 const scrX = proj.x - cam;
                 ctx.fillStyle = '#ff5722';
                 ctx.beginPath();
-                ctx.arc(scrX, proj.y, 8, 0, Math.PI * 2);
+                ctx.arc(scrX, proj.y, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffeb3b';
+                ctx.beginPath();
+                ctx.arc(scrX, proj.y, 6, 0, Math.PI * 2);
                 ctx.fill();
             }
 
-            // 6. Предметы на земле (если есть)
-            for (const obj of state.objects) {
-                if (obj.taken) continue;
-                const scrX = obj.x - cam;
-                // Отрисовка (пока не используется, но на будущее)
-                ctx.fillStyle = '#ffd54f';
-                ctx.fillRect(scrX - 10, state.groundY - 20, 20, 20);
-            }
-
-            // 7. Игрок
+            // 5. Игрок
             const p = state.player;
             const scrX = p.x - cam;
+            
+            // Мерцание при неуязвимости
+            if (p.invincible > 0 && Math.floor(p.invincible * 10) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+            
             if (assets.player.complete && assets.player.naturalWidth > 0) {
                 const fw = assets.player.width / 4;
                 const fh = assets.player.height / 4;
-                const row = p.facing > 0 ? 2 : 1;
+                // Строка 1 = Влево, Строка 2 = Вправо (в зависимости от спрайта)
+                const row = p.facing > 0 ? 2 : 1; 
                 const frame = p.frame % 4;
-                ctx.save();
-                if (p.facing === -1) {
-                    // Отражаем для левого направления (если спрайт по умолчанию смотрит вправо)
-                    // Но у нас 4 направления, так что просто берем строку 1 (лево)
-                }
                 ctx.drawImage(assets.player, frame * fw, row * fh, fw, fh, scrX - 16, p.y, 64, 64);
-                ctx.restore();
             } else {
                 ctx.fillStyle = '#2196f3'; ctx.fillRect(scrX, p.y, 64, 64);
             }
+            ctx.globalAlpha = 1.0;
 
-            // 8. Меч (анимация удара)
+            // 6. Меч (анимация удара)
             if (p.attacking > 0) {
                 ctx.save();
                 ctx.translate(scrX + 32, p.y + 32);
@@ -554,13 +572,6 @@
                 }
                 ctx.restore();
             }
-
-            // Виньетка для атмосферы
-            const grad = ctx.createRadialGradient(W/2, H/2, W*0.4, W/2, H/2, W*0.8);
-            grad.addColorStop(0, 'rgba(0,0,0,0)');
-            grad.addColorStop(1, 'rgba(0,0,0,0.4)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
         }
 
         // ============ ЦИКЛ ============
