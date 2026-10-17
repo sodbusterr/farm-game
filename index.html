@@ -9,368 +9,302 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body {
             width: 100%; height: 100%; overflow: hidden;
-            background: #5a2a2a;
+            background: #111;
             font-family: -apple-system, sans-serif;
             user-select: none; -webkit-user-select: none;
             touch-action: none;
         }
         #game { display: block; width: 100%; height: 100%; }
 
-        /* Инвентарь сверху */
-        .inventory {
-            position: absolute; top: 10px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 8px;
-            background: rgba(0,0,0,0.5);
-            padding: 8px 14px; border-radius: 12px;
-            pointer-events: none;
-        }
-        .inv-item {
-            display: flex; align-items: center; gap: 4px;
-            color: #fff; font-weight: bold; font-size: 15px;
-            text-shadow: 1px 1px 0 #000;
-        }
+        /* UI Слои */
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
+        /* Сердца (HP) */
+        .hp-bar { position: absolute; top: 10px; left: 10px; display: flex; gap: 2px; }
+        .heart { font-size: 20px; color: #ff3333; text-shadow: 1px 1px 0 #000; }
+        .heart.empty { color: #555; }
 
-        /* Монеты сверху слева */
-        .coins {
-            position: absolute; top: 10px; left: 12px;
-            color: #ffd54f; font-size: 20px; font-weight: bold;
-            text-shadow: 2px 2px 0 #000;
-            pointer-events: none;
+        /* Инвентарь */
+        .inventory { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; }
+        .inv-slot {
+            width: 40px; height: 40px; border: 2px solid #888;
+            background: rgba(0,0,0,0.5); border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .inv-slot img { width: 32px; height: 32px; image-rendering: pixelated; }
+        .inv-slot.empty { display: none; }
+
+        /* Уведомление (Тост) */
+        .toast {
+            position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px;
+            border-radius: 10px; border: 1px solid #aaa; font-weight: bold;
+            display: none; text-align: center; font-size: 16px;
         }
 
         /* Кнопки управления */
-        .controls {
-            position: absolute; bottom: 24px; left: 0; right: 0;
-            display: flex; justify-content: space-between;
-            padding: 0 24px; pointer-events: none;
+        .controls { position: absolute; bottom: 20px; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; pointer-events: auto; }
+        .dpad { display: flex; gap: 10px; }
+        .btn {
+            width: 65px; height: 65px; border-radius: 50%;
+            background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5);
+            color: #fff; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center;
         }
-        .left-group { display: flex; gap: 14px; pointer-events: auto; }
-        .right-group { display: flex; gap: 14px; pointer-events: auto; }
-        .ctrl-btn {
-            width: 72px; height: 72px; border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.5);
-            color: #fff; font-size: 30px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center;
-            touch-action: none;
-        }
-        .ctrl-btn:active { background: rgba(255,255,255,0.45); }
-        .jump-btn { background: rgba(124,179,66,0.5); }
-        .jump-btn:active { background: rgba(124,179,66,0.9); }
-
-        /* Кнопка "Посадить" */
-        .plant-btn {
-            position: absolute; bottom: 110px; left: 50%;
-            transform: translateX(-50%);
-            padding: 14px 28px; border-radius: 12px;
-            background: rgba(124,179,66,0.95);
-            border: 2px solid #fff;
-            color: #fff; font-size: 18px; font-weight: bold;
-            text-shadow: 1px 1px 0 #000;
-            display: none;
-        }
-        .plant-btn:active { background: #689f38; }
-
-        /* Меню выбора растения */
-        .seed-menu {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(40,20,20,0.95);
-            border: 3px solid #7cb342;
-            border-radius: 16px;
-            padding: 20px;
-            display: none;
-            flex-direction: column; gap: 12px;
-            min-width: 240px;
-        }
-        .seed-menu h3 {
-            color: #fff; text-align: center; font-size: 18px;
-            margin-bottom: 6px;
-        }
-        .seed-option {
-            padding: 14px; border-radius: 10px;
-            background: rgba(124,179,66,0.3);
-            border: 2px solid #7cb342;
-            color: #fff; font-size: 16px; font-weight: bold;
-            text-align: left;
-        }
-        .seed-option:active { background: rgba(124,179,66,0.7); }
-        .seed-option .time {
-            float: right; font-size: 13px; opacity: 0.7;
-        }
-        .close-btn {
-            background: rgba(200,50,50,0.7);
-            border-color: #f44336;
+        .btn:active { background: rgba(255,255,255,0.4); }
+        .btn-action { background: rgba(200,50,50,0.6); border-color: #f44336; font-size: 20px;}
+        .btn-jump { background: rgba(50,200,50,0.6); border-color: #4caf50; }
+        
+        /* Кнопка "Взять" */
+        .btn-take {
+            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+            padding: 12px 24px; border-radius: 10px; background: #ffd54f; color: #000;
+            font-weight: bold; font-size: 16px; border: 2px solid #fff; display: none; pointer-events: auto;
         }
 
-        /* Сообщение */
-        .toast {
-            position: absolute; top: 70px; left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.75);
-            color: #fff; padding: 10px 20px;
-            border-radius: 10px; font-size: 15px; font-weight: bold;
-            display: none; text-align: center;
+        /* Диалоги */
+        .dialog-box {
+            position: absolute; bottom: 100px; left: 10%; width: 80%;
+            background: rgba(20,20,30,0.95); border: 3px solid #7cb342;
+            border-radius: 10px; padding: 15px; color: #fff; display: none;
+            pointer-events: auto; font-size: 15px; line-height: 1.4;
+        }
+        .dialog-name { color: #ffd54f; font-weight: bold; margin-bottom: 5px; font-size: 14px;}
+        .dialog-next { text-align: right; color: #aaa; font-size: 12px; margin-top: 10px; animation: blink 1s infinite; cursor: pointer;}
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        /* Экран смерти */
+        .death-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; flex-direction: column;
+            align-items: center; justify-content: center; pointer-events: auto;
+        }
+        .death-text { color: #f44336; font-size: 32px; font-weight: bold; margin-bottom: 20px; text-shadow: 2px 2px 0 #000;}
+        .btn-restart {
+            padding: 15px 30px; font-size: 20px; background: #f44336; color: #fff;
+            border: none; border-radius: 10px; font-weight: bold;
         }
     </style>
 </head>
 <body>
     <canvas id="game"></canvas>
 
-    <div class="coins">💰 <span id="coins">0</span></div>
+    <!-- UI -->
+    <div class="ui-layer">
+        <div class="hp-bar" id="hp-bar"></div>
+        
+        <div class="inventory">
+            <div class="inv-slot empty" id="slot-sword"><img src="sword.png" alt="Меч"></div>
+            <div class="inv-slot empty" id="slot-staff"><img src="staff.png" alt="Посох"></div>
+        </div>
 
-    <div class="inventory">
-        <div class="inv-item">🌾 <span id="inv-wheat">0</span></div>
-        <div class="inv-item">🥔 <span id="inv-potato">0</span></div>
-        <div class="inv-item">🥕 <span id="inv-carrot">0</span></div>
+        <div class="toast" id="toast">Предмет получен!</div>
+
+        <div class="dialog-box" id="dialog-box">
+            <div class="dialog-name" id="dialog-name">Волшебник</div>
+            <div class="dialog-text" id="dialog-text">Привет...</div>
+            <div class="dialog-next" id="dialog-next">Нажми, чтобы продолжить ▼</div>
+        </div>
+
+        <button class="btn-take" id="btn-take">Взять</button>
     </div>
 
     <div class="controls">
-        <div class="left-group">
-            <button class="ctrl-btn" id="btn-left">◀</button>
+        <div class="dpad">
+            <button class="btn" id="btn-left">◀</button>
+            <button class="btn" id="btn-right">▶</button>
         </div>
-        <div class="right-group">
-            <button class="ctrl-btn" id="btn-right">▶</button>
-            <button class="ctrl-btn jump-btn" id="btn-jump">⤒</button>
+        <div class="dpad">
+            <button class="btn btn-action" id="btn-attack">⚔️</button>
+            <button class="btn btn-jump" id="btn-jump">⤒</button>
         </div>
     </div>
 
-    <button class="plant-btn" id="plant-btn">Посадить</button>
-
-    <div class="seed-menu" id="seed-menu">
-        <h3>Что посадить?</h3>
-        <button class="seed-option" data-crop="wheat">
-            🌾 Пшеница <span class="time">45 сек · 3 💰</span>
-        </button>
-        <button class="seed-option" data-crop="potato">
-            🥔 Картошка <span class="time">30 сек · 2 💰</span>
-        </button>
-        <button class="seed-option" data-crop="carrot">
-            🥕 Морковь <span class="time">30 сек · 2 💰</span>
-        </button>
-        <button class="seed-option close-btn" id="seed-close">Отмена</button>
+    <div class="death-screen" id="death-screen">
+        <div class="death-text">ВЫ ПОГИБЛИ</div>
+        <button class="btn-restart" id="btn-restart">Начать заново</button>
     </div>
-
-    <div class="toast" id="toast"></div>
 
     <script>
         window.Telegram?.WebApp?.ready();
         window.Telegram?.WebApp?.expand();
 
-        // ============ CANVAS ============
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         let W, H;
-        function resize() {
-            W = canvas.width = window.innerWidth;
-            H = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+        function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
 
-        // ============ АССЕТЫ ============
+        // Ассеты
         const assets = {
-            player: new Image(),
-            ground: new Image(),
-            bat: new Image()
+            player: new Image(), bg: new Image(), forest: new Image(),
+            wizard: new Image(), sword: new Image(), staff: new Image(), scorpion: new Image()
         };
         assets.player.src = 'player.png';
-        assets.ground.src = 'ground.png';
-        assets.bat.src = 'bat.png';
+        assets.bg.src = 'background.png';
+        assets.forest.src = 'forest_bg.png';
+        assets.wizard.src = 'wizard.png';
+        assets.sword.src = 'sword.png';
+        assets.staff.src = 'staff.png';
+        assets.scorpion.src = 'scorpion.png';
 
-        // ============ КОНСТАНТЫ ============
-        const CROPS = {
-            wheat:  { name: 'Пшеница', emoji: '🌾', growTime: 45, price: 3 },
-            potato: { name: 'Картошка', emoji: '🥔', growTime: 30, price: 2 },
-            carrot: { name: 'Морковь', emoji: '🥕', growTime: 30, price: 2 }
-        };
+        // Константы
+        const GRAVITY = 1800, SPEED = 250, JUMP = -650;
+        const GROUND_Y_RATIO = 0.8; // Земля на 80% высоты экрана
 
-        // ============ СОСТОЯНИЕ ============
-        const state = {
-            coins: 0,
-            inventory: { wheat: 0, potato: 0, carrot: 0 },
-            // Мир
-            worldWidth: 2000,
-            groundY: 0, // отрисовывается в draw
-            camera: { x: 0 },
-            // Персонаж
-            player: {
-                x: 300, y: 0, vx: 0, vy: 0,
-                onGround: false, facing: 1,
-                frame: 0, animTimer: 0
-            },
-            // Грядки
-            plots: [],
-            // Лавка
-            shop: { x: 1600, y: 0, w: 100, h: 100 },
-            // Летучая мышь
-            bat: { x: 0, y: 0, vx: 0, active: false, timer: 5, frame: 0 },
-            // UI
-            nearPlot: null,
-            nearShop: false,
-            seedMenuOpen: false,
-            selectedPlot: null
-        };
+        // Состояние игры
+        let state = {};
 
-        // Гравитация
-        const GRAVITY = 1800;
-        const MOVE_SPEED = 220;
-        const JUMP_FORCE = -620;
-        const PLAYER_SIZE = 48;
-
-        // Инициализация мира
-        function initWorld() {
-            const groundHeight = H * 0.35;
-            state.groundY = H - groundHeight;
-            state.worldWidth = Math.max(2400, W * 2.5);
-
+        function initGame() {
+            state = {
+                location: 1, // 1 = старт, 2 = лес
+                camera: { x: 0 },
+                player: { x: 100, y: 0, vx: 0, vy: 0, onGround: false, facing: 1, frame: 0, animTimer: 0, hp: 9, maxHp: 9, hasSword: false, hasStaff: false, attacking: 0, attackTimer: 0, hitEnemies: [] },
+                worldWidth: 3000,
+                groundY: 0,
+                objects: [], // Предметы на земле
+                npcs: [], // Волшебники
+                enemies: [],
+                projectiles: [],
+                dialog: { active: false, lines: [], index: 0, onComplete: null },
+                scriptStage: 0, // 0=старт, 1=убит скорпион, 2=в лесу
+                dead: false
+            };
+            
+            // Настройка мира
+            resizeWorld();
+            
             // Игрок
-            state.player.x = 300;
-            state.player.y = state.groundY - PLAYER_SIZE;
-            state.player.vy = 0;
-            state.player.onGround = true;
+            state.player.y = state.groundY - 64;
 
-            // Грядки (3 штуки)
-            state.plots = [
-                { x: 600,  w: 90, h: 50, y: state.groundY - 50, crops: [] },
-                { x: 800,  w: 90, h: 50, y: state.groundY - 50, crops: [] },
-                { x: 1000, w: 90, h: 50, y: state.groundY - 50, crops: [] }
-            ];
-            for (const plot of state.plots) {
-                plot.crops = [
-                    { type: null, timer: 0, ready: false },
-                    { type: null, timer: 0, ready: false },
-                    { type: null, timer: 0, ready: false },
-                    { type: null, timer: 0, ready: false },
-                    { type: null, timer: 0, ready: false }
-                ];
-            }
+            // Волшебник 1
+            state.npcs.push({
+                id: 'wizard1', x: 300, y: state.groundY - 80, w: 64, h: 80,
+                img: 'wizard', visible: true, interactable: true
+            });
 
-            // Лавка
-            state.shop.x = state.worldWidth - 500;
-            state.shop.y = state.groundY - state.shop.h;
-
-            // Летучая мышь
-            state.bat.timer = 5;
+            updateUI();
         }
-        initWorld();
-        window.addEventListener('resize', () => { resize(); initWorld(); });
+
+        function resizeWorld() {
+            state.groundY = H * GROUND_Y_RATIO;
+            state.worldWidth = Math.max(W * 3, 2500);
+            if (state.location === 2) state.worldWidth = W * 2;
+        }
+        window.addEventListener('resize', () => { resize(); resizeWorld(); });
+
+        // ============ UI ============
+        function updateUI() {
+            // Сердца
+            const hpBar = document.getElementById('hp-bar');
+            hpBar.innerHTML = '';
+            for (let i = 0; i < state.player.maxHp; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart' + (i < state.player.hp ? '' : ' empty');
+                heart.innerText = '❤️';
+                hpBar.appendChild(heart);
+            }
+            // Инвентарь
+            document.getElementById('slot-sword').className = 'inv-slot ' + (state.player.hasSword ? '' : 'empty');
+            document.getElementById('slot-staff').className = 'inv-slot ' + (state.player.hasStaff ? '' : 'empty');
+        }
+
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            toast.innerText = text;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+
+        function showDialog(name, lines, onComplete) {
+            state.dialog = { active: true, name: name, lines: lines, index: 0, onComplete: onComplete };
+            document.getElementById('dialog-box').style.display = 'block';
+            document.getElementById('dialog-name').innerText = name;
+            document.getElementById('dialog-text').innerText = lines[0];
+        }
+
+        document.getElementById('dialog-next').addEventListener('click', () => {
+            if (!state.dialog.active) return;
+            state.dialog.index++;
+            if (state.dialog.index >= state.dialog.lines.length) {
+                state.dialog.active = false;
+                document.getElementById('dialog-box').style.display = 'none';
+                if (state.dialog.onComplete) state.dialog.onComplete();
+            } else {
+                document.getElementById('dialog-text').innerText = state.dialog.lines[state.dialog.index];
+            }
+        });
 
         // ============ УПРАВЛЕНИЕ ============
-        let input = { left: false, right: false, jump: false };
-
-        // Кнопки на экране
-        function bindBtn(id, key) {
+        const input = { left: false, right: false, jump: false, attack: false };
+        const bindBtn = (id, key) => {
             const el = document.getElementById(id);
             el.addEventListener('touchstart', e => { e.preventDefault(); input[key] = true; });
             el.addEventListener('touchend', e => { e.preventDefault(); input[key] = false; });
             el.addEventListener('mousedown', e => { e.preventDefault(); input[key] = true; });
             el.addEventListener('mouseup', e => { e.preventDefault(); input[key] = false; });
-            el.addEventListener('mouseleave', () => { input[key] = false; });
-        }
-        bindBtn('btn-left', 'left');
-        bindBtn('btn-right', 'right');
-        bindBtn('btn-jump', 'jump');
-
-        // Клавиатура
+        };
+        bindBtn('btn-left', 'left'); bindBtn('btn-right', 'right');
+        bindBtn('btn-jump', 'jump'); bindBtn('btn-attack', 'attack');
+        
         window.addEventListener('keydown', e => {
             if (e.key === 'ArrowLeft' || e.key === 'a') input.left = true;
             if (e.key === 'ArrowRight' || e.key === 'd') input.right = true;
-            if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w') input.jump = true;
+            if (e.key === 'ArrowUp' || e.key === 'w') input.jump = true;
+            if (e.key === ' ') input.attack = true;
         });
         window.addEventListener('keyup', e => {
             if (e.key === 'ArrowLeft' || e.key === 'a') input.left = false;
             if (e.key === 'ArrowRight' || e.key === 'd') input.right = false;
-            if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w') input.jump = false;
+            if (e.key === 'ArrowUp' || e.key === 'w') input.jump = false;
+            if (e.key === ' ') input.attack = false;
         });
 
-        // ============ UI ============
-        const plantBtn = document.getElementById('plant-btn');
-        const seedMenu = document.getElementById('seed-menu');
-        const toastEl = document.getElementById('toast');
-        let toastTimer = 0;
-
-        function showToast(text, ms = 1800) {
-            toastEl.innerText = text;
-            toastEl.style.display = 'block';
-            toastTimer = ms / 1000;
-        }
-
-        function updateUI() {
-            document.getElementById('coins').innerText = state.coins;
-            document.getElementById('inv-wheat').innerText = state.inventory.wheat;
-            document.getElementById('inv-potato').innerText = state.inventory.potato;
-            document.getElementById('inv-carrot').innerText = state.inventory.carrot;
-        }
-
-        // Кнопка "Посадить"
-        plantBtn.addEventListener('click', () => {
-            if (!state.nearPlot) return;
-            state.selectedPlot = state.nearPlot;
-            state.seedMenuOpen = true;
-            seedMenu.style.display = 'flex';
-            plantBtn.style.display = 'none';
-        });
-
-        // Выбор семени
-        document.querySelectorAll('.seed-option[data-crop]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const cropType = btn.dataset.crop;
-                const plot = state.selectedPlot;
-                if (!plot) return;
-                // Найти свободную ячейку
-                const freeSlot = plot.crops.find(c => !c.type);
-                if (!freeSlot) {
-                    showToast('Грядка заполнена!');
-                    closeSeedMenu();
-                    return;
-                }
-                freeSlot.type = cropType;
-                freeSlot.timer = CROPS[cropType].growTime;
-                freeSlot.ready = false;
-                showToast(`Посадил ${CROPS[cropType].emoji} ${CROPS[cropType].name}`);
-                closeSeedMenu();
-            });
-        });
-
-        document.getElementById('seed-close').addEventListener('click', closeSeedMenu);
-
-        function closeSeedMenu() {
-            state.seedMenuOpen = false;
-            seedMenu.style.display = 'none';
-            state.selectedPlot = null;
-        }
-
-        // ============ ОБНОВЛЕНИЕ ============
-        function update(dt) {
+        // Кнопка "Взять"
+        document.getElementById('btn-take').addEventListener('click', () => {
             const p = state.player;
+            for (let i = 0; i < state.objects.length; i++) {
+                const obj = state.objects[i];
+                if (Math.abs(p.x - obj.x) < 60 && !obj.taken) {
+                    obj.taken = true;
+                    if (obj.type === 'sword') { p.hasSword = true; showToast('Получен предмет: Меч'); }
+                    if (obj.type === 'staff') { p.hasStaff = true; showToast('Получен предмет: Посох'); }
+                    updateUI();
+                    break;
+                }
+            }
+        });
 
-            // Горизонтальное движение
-            p.vx = 0;
-            if (input.left)  { p.vx = -MOVE_SPEED; p.facing = -1; }
-            if (input.right) { p.vx =  MOVE_SPEED; p.facing = 1; }
+        // Рестарт
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            document.getElementById('death-screen').style.display = 'none';
+            initGame();
+        });
 
-            // Прыжок
-            if (input.jump && p.onGround) {
-                p.vy = JUMP_FORCE;
-                p.onGround = false;
+        // ============ ЛОГИКА ============
+        function update(dt) {
+            if (state.dead || state.dialog.active) {
+                state.player.vx = 0; state.player.vy = 0; return;
             }
 
-            // Гравитация
-            p.vy += GRAVITY * dt;
+            const p = state.player;
 
             // Движение
+            p.vx = 0;
+            if (input.left) { p.vx = -SPEED; p.facing = -1; }
+            if (input.right) { p.vx = SPEED; p.facing = 1; }
+            if (input.jump && p.onGround) { p.vy = JUMP; p.onGround = false; }
+
+            p.vy += GRAVITY * dt;
             p.x += p.vx * dt;
             p.y += p.vy * dt;
 
-            // Границы мира
+            // Границы
             if (p.x < 20) p.x = 20;
             if (p.x > state.worldWidth - 20) p.x = state.worldWidth - 20;
 
             // Земля
-            if (p.y + PLAYER_SIZE >= state.groundY) {
-                p.y = state.groundY - PLAYER_SIZE;
+            if (p.y + 64 >= state.groundY) {
+                p.y = state.groundY - 64;
                 p.vy = 0;
                 p.onGround = true;
             }
@@ -378,369 +312,255 @@
             // Анимация
             if (Math.abs(p.vx) > 0 && p.onGround) {
                 p.animTimer += dt;
-                if (p.animTimer > 0.15) {
-                    p.animTimer = 0;
-                    p.frame = (p.frame + 1) % 4;
+                if (p.animTimer > 0.15) { p.animTimer = 0; p.frame = (p.frame + 1) % 4; }
+            } else { p.frame = 0; }
+
+            // Атака
+            if (input.attack && p.hasSword && p.attackTimer <= 0) {
+                p.attackTimer = 0.5;
+                p.attacking = 0.3;
+                p.hitEnemies = [];
+            }
+            if (p.attackTimer > 0) { p.attackTimer -= dt; p.attacking -= dt; }
+            if (input.attack) input.attack = false; // Сброс, чтобы не спамить
+
+            // Проверка кнопки "Взять"
+            let showTake = false;
+            for (const obj of state.objects) {
+                if (!obj.taken && Math.abs(p.x - obj.x) < 60) showTake = true;
+            }
+            document.getElementById('btn-take').style.display = showTake ? 'block' : 'none';
+
+            // Сюжет: Волшебник 1
+            const wiz = state.npcs.find(n => n.id === 'wizard1');
+            if (wiz && wiz.visible && state.scriptStage === 0) {
+                if (Math.abs(p.x - wiz.x) < 80 && !state.dialog.active) {
+                    wiz.visible = false; // Исчезает для диалога
+                    showDialog('Волшебник', [
+                        'Добро пожаловать в мир Ashfield.',
+                        'Думаю, тебе пригодится этот меч.',
+                        'В этом мире множество враждебных существ.',
+                        'Будь осторожен.',
+                        'Вперёд!'
+                    ], () => {
+                        p.hasSword = true;
+                        showToast('Получен предмет: Меч');
+                        updateUI();
+                        state.scriptStage = 1; // Переход к скорпиону
+                    });
                 }
-            } else {
-                p.frame = 0;
             }
 
-            // Камера — следит за игроком
-            const targetCamX = p.x - W / 2;
-            state.camera.x += (targetCamX - state.camera.x) * 0.1;
+            // Сюжет: Скорпион
+            if (state.scriptStage === 1 && state.enemies.length === 0 && !state.dialog.active) {
+                if (p.x > 500) { // На 30-м блоке
+                    state.enemies.push({
+                        type: 'scorpion', x: p.x + 400, y: state.groundY - 60,
+                        vx: 0, vy: 0, hp: 10, maxHp: 10, facing: -1,
+                        shootTimer: 2, alive: true, frame: 0
+                    });
+                }
+            }
+
+            // Логика врагов
+            for (const enemy of state.enemies) {
+                if (!enemy.alive) continue;
+                // Движение к игроку
+                if (Math.abs(enemy.x - p.x) > 100) {
+                    enemy.vx = (p.x > enemy.x) ? 80 : -80;
+                    enemy.facing = enemy.vx > 0 ? 1 : -1;
+                } else {
+                    enemy.vx = 0;
+                }
+                enemy.x += enemy.vx * dt;
+
+                // Стрельба
+                enemy.shootTimer -= dt;
+                if (enemy.shootTimer <= 0 && Math.abs(enemy.x - p.x) < 400) {
+                    enemy.shootTimer = 2;
+                    state.projectiles.push({
+                        x: enemy.x, y: enemy.y + 20, vx: enemy.facing * 300, vy: 0, alive: true
+                    });
+                }
+
+                // Проверка удара
+                if (p.attacking > 0 && !p.hitEnemies.includes(enemy)) {
+                    const hitX = p.x + (p.facing * 60);
+                    if (Math.abs(hitX - enemy.x) < 60 && Math.abs(p.y - enemy.y) < 80) {
+                        enemy.hp -= 1;
+                        p.hitEnemies.push(enemy);
+                        if (enemy.hp <= 0) {
+                            enemy.alive = false;
+                            setTimeout(() => {
+                                if (state.scriptStage === 1) {
+                                    showDialog('Волшебник', [
+                                        'Вижу, ты справился со скорпионом, молодец.',
+                                        'Теперь я могу доверить тебе этот посох.',
+                                        'Этот посох позволяет переходить в другие миры.',
+                                        'Но использовать его ты сможешь...',
+                                        'Только когда накопишь достаточно опыта.',
+                                        'Но давай немного поменяем обстановку.'
+                                    ], () => {
+                                        p.hasStaff = true;
+                                        showToast('Получен предмет: Посох');
+                                        updateUI();
+                                        state.scriptStage = 2;
+                                        // Телепорт в лес
+                                        setTimeout(() => {
+                                            state.location = 2;
+                                            state.worldWidth = W * 2;
+                                            p.x = 100;
+                                            p.y = state.groundY - 64;
+                                            state.enemies = [];
+                                            state.npcs = []; // Убираем волшебника
+                                            showToast('Переход в лес...');
+                                        }, 1000);
+                                    });
+                                }
+                            }, 2000);
+                        }
+                    }
+                }
+            }
+            state.enemies = state.enemies.filter(e => e.alive || e.hp > 0);
+
+            // Логика снарядов (фаерболов)
+            for (const proj of state.projectiles) {
+                proj.x += proj.vx * dt;
+                if (Math.abs(proj.x - (p.x + 30)) < 30 && Math.abs(proj.y - (p.y + 30)) < 40) {
+                    proj.alive = false;
+                    p.hp -= 1;
+                    updateUI();
+                    if (p.hp <= 0) {
+                        state.dead = true;
+                        document.getElementById('death-screen').style.display = 'flex';
+                    }
+                }
+            }
+            state.projectiles = state.projectiles.filter(pr => pr.alive && pr.x > 0 && pr.x < state.worldWidth);
+
+            // Камера
+            const targetCam = p.x - W / 2;
+            state.camera.x += (targetCam - state.camera.x) * 10 * dt;
             state.camera.x = Math.max(0, Math.min(state.camera.x, state.worldWidth - W));
-
-            // Рост урожая
-            for (const plot of state.plots) {
-                for (const crop of plot.crops) {
-                    if (crop.type && !crop.ready) {
-                        crop.timer -= dt;
-                        if (crop.timer <= 0) {
-                            crop.ready = true;
-                            crop.timer = 0;
-                        }
-                    }
-                }
-            }
-
-            // Проверка близости к грядке
-            state.nearPlot = null;
-            for (const plot of state.plots) {
-                const plotCenterX = plot.x + plot.w / 2;
-                const dx = Math.abs((p.x + PLAYER_SIZE/2) - plotCenterX);
-                if (dx < plot.w / 2 + 40) {
-                    state.nearPlot = plot;
-                    break;
-                }
-            }
-
-            // Показ кнопки "Посадить" / "Собрать"
-            if (state.seedMenuOpen) {
-                plantBtn.style.display = 'none';
-            } else if (state.nearPlot) {
-                // Если есть готовый урожай — кнопка "Собрать"
-                const hasReady = state.nearPlot.crops.some(c => c.type && c.ready);
-                const hasEmpty = state.nearPlot.crops.some(c => !c.type);
-                if (hasReady) {
-                    plantBtn.innerText = 'Собрать';
-                    plantBtn.style.display = 'block';
-                } else if (hasEmpty) {
-                    plantBtn.innerText = 'Посадить';
-                    plantBtn.style.display = 'block';
-                } else {
-                    plantBtn.style.display = 'none';
-                }
-            } else {
-                plantBtn.style.display = 'none';
-            }
-
-            // Логика кнопки (переназначаем действие)
-            plantBtn.onclick = () => {
-                if (!state.nearPlot) return;
-                const hasReady = state.nearPlot.crops.some(c => c.type && c.ready);
-                if (hasReady) {
-                    // Собрать всё готовое
-                    let collected = 0;
-                    for (const crop of state.nearPlot.crops) {
-                        if (crop.type && crop.ready) {
-                            state.inventory[crop.type] += 1;
-                            crop.type = null;
-                            crop.ready = false;
-                            collected++;
-                        }
-                    }
-                    if (collected > 0) {
-                        showToast(`Собрано: ${collected} 🌾🥔🥕`);
-                        updateUI();
-                    }
-                } else {
-                    // Открыть меню посадки
-                    state.selectedPlot = state.nearPlot;
-                    state.seedMenuOpen = true;
-                    seedMenu.style.display = 'flex';
-                    plantBtn.style.display = 'none';
-                }
-            };
-
-            // Проверка близости к лавке
-            const shopCenterX = state.shop.x + state.shop.w / 2;
-            const dxShop = Math.abs((p.x + PLAYER_SIZE/2) - shopCenterX);
-            state.nearShop = dxShop < state.shop.w / 2 + 50;
-
-            // Продажа в лавке (по кнопке "Собрать" если рядом лавка)
-            if (state.nearShop && !state.nearPlot && !state.seedMenuOpen) {
-                const totalItems = state.inventory.wheat + state.inventory.potato + state.inventory.carrot;
-                if (totalItems > 0) {
-                    plantBtn.innerText = 'Продать всё';
-                    plantBtn.style.display = 'block';
-                    plantBtn.onclick = () => {
-                        let earned = 0;
-                        earned += state.inventory.wheat * CROPS.wheat.price;
-                        earned += state.inventory.potato * CROPS.potato.price;
-                        earned += state.inventory.carrot * CROPS.carrot.price;
-                        state.coins += earned;
-                        state.inventory.wheat = 0;
-                        state.inventory.potato = 0;
-                        state.inventory.carrot = 0;
-                        showToast(`Продано за ${earned} 💰`);
-                        updateUI();
-                    };
-                }
-            }
-
-            // Летучая мышь
-            const bat = state.bat;
-            if (!bat.active) {
-                bat.timer -= dt;
-                if (bat.timer <= 0) {
-                    bat.active = true;
-                    bat.x = state.camera.x + W + 50;
-                    bat.y = 100 + Math.random() * 150;
-                    bat.vx = -60 - Math.random() * 40;
-                    bat.duration = 12;
-                    bat.timer = 999;
-                }
-            } else {
-                bat.x += bat.vx * dt;
-                bat.frame += dt * 8;
-                bat.duration -= dt;
-                if (bat.duration <= 0) {
-                    bat.active = false;
-                    bat.timer = 15 + Math.random() * 20;
-                }
-            }
-
-            // Тост
-            if (toastTimer > 0) {
-                toastTimer -= dt;
-                if (toastTimer <= 0) toastEl.style.display = 'none';
-            }
         }
 
         // ============ ОТРИСОВКА ============
         function draw() {
             const cam = state.camera.x;
             const groundY = state.groundY;
-            const groundHeight = H - groundY;
-            
-            const assets = {
-    player: new Image(),
-    ground: new Image(),
-    bat: new Image(),
-    background: new Image()  // ← добавь эту строчку
-};
-assets.player.src = 'player.png';
-assets.ground.src = 'ground.png';
-assets.bat.src = 'bat.png';
-assets.background.src = 'background.png';  // ← и эту
 
-          // ==== ФОН: картинка ====
-if (assets.background.complete && assets.background.naturalWidth > 0) {
-    ctx.drawImage(assets.background, 0, 0, W, groundY);
-} else {
-    ctx.fillStyle = '#5a2a2a';
-    ctx.fillRect(0, 0, W, groundY);
-}
-
-            // Дальние силуэты деревьев (параллакс 0.2)
-            ctx.fillStyle = '#3a1a1a';
-            for (let i = 0; i < 20; i++) {
-                const treeX = (i * 300 - cam * 0.2) % (state.worldWidth);
-                const screenX = treeX - cam * 0.2;
-                if (screenX < -100 || screenX > W + 100) continue;
-                drawDeadTree(screenX, groundY, 0.6);
+            // 1. Фон (весь экран)
+            const bgImg = state.location === 1 ? assets.bg : assets.forest;
+            if (bgImg.complete && bgImg.naturalWidth > 0) {
+                // Растягиваем на весь экран
+                ctx.drawImage(bgImg, 0, 0, W, H);
+            } else {
+                ctx.fillStyle = state.location === 1 ? '#5a2a2a' : '#2e4a2e';
+                ctx.fillRect(0, 0, W, H);
             }
 
-            // Средние силуэты (параллакс 0.5)
-            ctx.fillStyle = '#2a1010';
-            for (let i = 0; i < 25; i++) {
-                const treeX = (i * 250 - cam * 0.5) % (state.worldWidth);
-                const screenX = treeX - cam * 0.5;
-                if (screenX < -100 || screenX > W + 100) continue;
-                drawDeadTree(screenX, groundY, 0.9);
-            }
-
-            // ==== ЗЕМЛЯ ====
-            // Верхний слой — трава
+            // 2. Земля
+            ctx.fillStyle = '#3a1f08';
+            ctx.fillRect(0, groundY, W, H - groundY);
             ctx.fillStyle = '#6b8f3d';
-            ctx.fillRect(0, groundY, W, 8);
-            // Земля
-            ctx.fillStyle = '#5a3a1a';
-            ctx.fillRect(0, groundY + 8, W, groundHeight - 8);
-            // Если есть тайл земли — рисуем его полосой
-            if (assets.ground.complete && assets.ground.naturalWidth > 0) {
-                const tileSize = 64;
-                for (let x = 0; x < W; x += tileSize) {
-                    ctx.drawImage(assets.ground, x, groundY, tileSize, tileSize);
+            ctx.fillRect(0, groundY, W, 10);
+
+            // 3. Волшебник
+            for (const npc of state.npcs) {
+                if (!npc.visible) continue;
+                const scrX = npc.x - cam;
+                if (scrX > -100 && scrX < W + 100) {
+                    if (assets.wizard.complete && assets.wizard.naturalWidth > 0) {
+                        ctx.drawImage(assets.wizard, scrX, npc.y, npc.w, npc.h);
+                    } else {
+                        ctx.fillStyle = '#4a4aff'; ctx.fillRect(scrX, npc.y, npc.w, npc.h);
+                    }
                 }
             }
 
-            // ==== ГРЯДКИ ====
-            for (const plot of state.plots) {
-                const screenX = plot.x - cam;
-                if (screenX < -200 || screenX > W + 200) continue;
-                drawPlot(screenX, plot.y, plot.w, plot.h, plot);
-            }
-
-            // ==== ЛАВКА ====
-            const shopScreenX = state.shop.x - cam;
-            if (shopScreenX > -200 && shopScreenX < W + 200) {
-                drawShop(shopScreenX, state.shop.y, state.shop.w, state.shop.h);
-                // Подсказка
-                if (state.nearShop) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                    ctx.font = 'bold 14px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('Лавка', shopScreenX + state.shop.w/2, state.shop.y - 10);
+            // 4. Враги
+            for (const enemy of state.enemies) {
+                if (!enemy.alive) continue;
+                const scrX = enemy.x - cam;
+                if (scrX > -100 && scrX < W + 100) {
+                    if (assets.scorpion.complete && assets.scorpion.naturalWidth > 0) {
+                        ctx.save();
+                        if (enemy.facing === -1) {
+                            ctx.translate(scrX + 60, enemy.y);
+                            ctx.scale(-1, 1);
+                            ctx.drawImage(assets.scorpion, 0, 0, 64, 64);
+                        } else {
+                            ctx.drawImage(assets.scorpion, scrX, enemy.y, 64, 64);
+                        }
+                        ctx.restore();
+                    } else {
+                        ctx.fillStyle = '#f44336'; ctx.fillRect(scrX, enemy.y, 64, 64);
+                    }
+                    // HP бар
+                    ctx.fillStyle = '#000'; ctx.fillRect(scrX, enemy.y - 10, 64, 6);
+                    ctx.fillStyle = '#f44336'; ctx.fillRect(scrX, enemy.y - 10, 64 * (enemy.hp / enemy.maxHp), 6);
                 }
             }
 
-            // ==== ПЕРСОНАЖ ====
-            drawPlayer();
-
-            // ==== ЛЕТУЧАЯ МЫШЬ ====
-            if (state.bat.active) drawBat();
-
-            // ==== ВИНЬЕТКА (атмосфера) ====
-            const vignette = ctx.createRadialGradient(W/2, H/2, W*0.3, W/2, H/2, W*0.7);
-            vignette.addColorStop(0, 'rgba(0,0,0,0)');
-            vignette.addColorStop(1, 'rgba(0,0,0,0.35)');
-            ctx.fillStyle = vignette;
-            ctx.fillRect(0, 0, W, H);
-        }
-
-        function drawDeadTree(x, baseY, scale) {
-            ctx.save();
-            ctx.translate(x, baseY);
-            ctx.scale(scale, scale);
-            // Ствол
-            ctx.fillRect(-6, -80, 12, 80);
-            // Ветки
-            ctx.fillRect(-30, -70, 25, 6);
-            ctx.fillRect(5, -60, 28, 5);
-            ctx.fillRect(-20, -90, 18, 5);
-            ctx.fillRect(8, -95, 22, 5);
-            ctx.restore();
-        }
-
-        function drawPlot(x, y, w, h, plot) {
-            // Земля грядки
-            ctx.fillStyle = '#4a2a10';
-            ctx.fillRect(x, y, w, h);
-            ctx.fillStyle = '#3a1f08';
-            ctx.fillRect(x, y, w, 6);
-            // Борозды
-            ctx.strokeStyle = '#2a1505';
-            ctx.lineWidth = 2;
-            for (let i = 1; i < 5; i++) {
+            // 5. Снаряды
+            for (const proj of state.projectiles) {
+                const scrX = proj.x - cam;
+                ctx.fillStyle = '#ff5722';
                 ctx.beginPath();
-                ctx.moveTo(x + 4, y + i * (h / 5));
-                ctx.lineTo(x + w - 4, y + i * (h / 5));
-                ctx.stroke();
+                ctx.arc(scrX, proj.y, 8, 0, Math.PI * 2);
+                ctx.fill();
             }
-            // Ячейки с растениями — 5 штук в ряд
-            const slotW = (w - 8) / 5;
-            for (let i = 0; i < 5; i++) {
-                const crop = plot.crops[i];
-                const cx = x + 4 + i * slotW + slotW / 2;
-                const cy = y + h / 2;
-                if (!crop) continue;
-                if (!crop.type) continue;
-                // Растение
-                ctx.font = '24px serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                if (crop.ready) {
-                    ctx.fillText(CROPS[crop.type].emoji, cx, cy - 8);
-                } else {
-                    // Растущее — показываем прогресс
-                    ctx.fillText('🌱', cx, cy);
-                    // Полоска прогресса
-                    const progress = 1 - (crop.timer / CROPS[crop.type].growTime);
-                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                    ctx.fillRect(cx - 12, cy + 14, 24, 4);
-                    ctx.fillStyle = '#7cb342';
-                    ctx.fillRect(cx - 12, cy + 14, 24 * progress, 4);
-                }
+
+            // 6. Предметы на земле (если есть)
+            for (const obj of state.objects) {
+                if (obj.taken) continue;
+                const scrX = obj.x - cam;
+                // Отрисовка (пока не используется, но на будущее)
+                ctx.fillStyle = '#ffd54f';
+                ctx.fillRect(scrX - 10, state.groundY - 20, 20, 20);
             }
-        }
 
-        function drawShop(x, y, w, h) {
-            // Домик
-            ctx.fillStyle = '#6b4a2a';
-            ctx.fillRect(x, y + h * 0.4, w, h * 0.6);
-            // Крыша
-            ctx.fillStyle = '#8b2a2a';
-            ctx.beginPath();
-            ctx.moveTo(x - 10, y + h * 0.4);
-            ctx.lineTo(x + w/2, y);
-            ctx.lineTo(x + w + 10, y + h * 0.4);
-            ctx.closePath();
-            ctx.fill();
-            // Дверь
-            ctx.fillStyle = '#3a1f08';
-            ctx.fillRect(x + w/2 - 12, y + h * 0.65, 24, h * 0.35);
-            // Окно
-            ctx.fillStyle = '#ffd54f';
-            ctx.fillRect(x + 15, y + h * 0.55, 18, 18);
-            ctx.fillRect(x + w - 33, y + h * 0.55, 18, 18);
-            // Вывеска
-            ctx.font = '28px serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('🏪', x + w/2, y + h * 0.55);
-        }
-
-        function drawPlayer() {
+            // 7. Игрок
             const p = state.player;
-            const screenX = p.x - state.camera.x;
-            const screenY = p.y;
-
-            if (!assets.player.complete || assets.player.naturalWidth === 0) {
-                // Заглушка — квадрат
-                ctx.fillStyle = '#e8a86b';
-                ctx.fillRect(screenX, screenY, PLAYER_SIZE, PLAYER_SIZE);
-                ctx.fillStyle = '#000';
-                ctx.fillRect(screenX + 12, screenY + 16, 6, 6);
-                ctx.fillRect(screenX + 30, screenY + 16, 6, 6);
-                return;
+            const scrX = p.x - cam;
+            if (assets.player.complete && assets.player.naturalWidth > 0) {
+                const fw = assets.player.width / 4;
+                const fh = assets.player.height / 4;
+                const row = p.facing > 0 ? 2 : 1;
+                const frame = p.frame % 4;
+                ctx.save();
+                if (p.facing === -1) {
+                    // Отражаем для левого направления (если спрайт по умолчанию смотрит вправо)
+                    // Но у нас 4 направления, так что просто берем строку 1 (лево)
+                }
+                ctx.drawImage(assets.player, frame * fw, row * fh, fw, fh, scrX - 16, p.y, 64, 64);
+                ctx.restore();
+            } else {
+                ctx.fillStyle = '#2196f3'; ctx.fillRect(scrX, p.y, 64, 64);
             }
 
-            // Спрайт-лист 4×4
-            const fw = assets.player.width / 4;
-            const fh = assets.player.height / 4;
-            // Используем строку 2 (вправо) или строку 1 (влево)
-            const row = p.facing > 0 ? 1 : 2; // 0=низ, 1=лево, 2=право, 3=верх (примерно)
-            const frame = p.frame % 4;
-            const srcX = frame * fw;
-            const srcY = row * fh;
-            const dw = PLAYER_SIZE * 1.2;
-            const dh = PLAYER_SIZE * 1.2;
-            ctx.drawImage(
-                assets.player,
-                srcX, srcY, fw, fh,
-                screenX + PLAYER_SIZE/2 - dw/2,
-                screenY + PLAYER_SIZE - dh,
-                dw, dh
-            );
-        }
-
-        function drawBat() {
-            const bat = state.bat;
-            const screenX = bat.x - state.camera.x;
-            const screenY = bat.y;
-            if (!assets.bat.complete || assets.bat.naturalWidth === 0) {
-                ctx.fillStyle = '#6a4a6a';
-                ctx.fillRect(screenX - 15, screenY - 10, 30, 20);
-                return;
+            // 8. Меч (анимация удара)
+            if (p.attacking > 0) {
+                ctx.save();
+                ctx.translate(scrX + 32, p.y + 32);
+                ctx.scale(p.facing, 1);
+                ctx.rotate(-0.5 + (1 - p.attacking / 0.3) * 1.5);
+                if (assets.sword.complete && assets.sword.naturalWidth > 0) {
+                    ctx.drawImage(assets.sword, 20, -20, 60, 60);
+                } else {
+                    ctx.fillStyle = '#ccc';
+                    ctx.fillRect(20, -5, 60, 10);
+                }
+                ctx.restore();
             }
-            const fw = assets.bat.width / 4;
-            const fh = assets.bat.height / 4;
-            const frame = Math.floor(bat.frame) % 4;
-            const srcX = frame * fw;
-            const srcY = 0;
-            const dw = 50, dh = 50;
-            ctx.drawImage(assets.bat, srcX, srcY, fw, fh, screenX - dw/2, screenY - dh/2, dw, dh);
+
+            // Виньетка для атмосферы
+            const grad = ctx.createRadialGradient(W/2, H/2, W*0.4, W/2, H/2, W*0.8);
+            grad.addColorStop(0, 'rgba(0,0,0,0)');
+            grad.addColorStop(1, 'rgba(0,0,0,0.4)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
         }
 
         // ============ ЦИКЛ ============
@@ -752,8 +572,9 @@ if (assets.background.complete && assets.background.naturalWidth > 0) {
             draw();
             requestAnimationFrame(loop);
         }
-        updateUI();
+
+        initGame();
         requestAnimationFrame(loop);
     </script>
 </body>
-</html>\
+</html>
